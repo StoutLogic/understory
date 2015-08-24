@@ -19,7 +19,7 @@ class View
      * class name.
      * @var string
      */
-    private $template = '';
+    protected $template = '';
 
     /**
      * Return the template file. It will first check to see if the $template
