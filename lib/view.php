@@ -42,7 +42,9 @@ class View
     }
 
     /**
-     * Set the value of the template
+     * Manually set the path of the template from the base 'templates' directory. 
+     * Set to empty string or don't set to autogenerate the template path 
+     * from the namespace and class name.
      * 
      * @param string $template template path
      */
