@@ -19,7 +19,7 @@ class View
      * class name.
      * @var string
      */
-    protected $template = '';
+    private $template = '';
 
     /**
      * Return the template file. It will first check to see if the $template
@@ -35,9 +35,19 @@ class View
             $called_class = get_called_class();
             $cls = preg_replace('/.*Views/', '', $called_class);
             $cls = strtolower(str_replace('_', '', preg_replace('/(?<=\\w)(?=[A-Z])/', '-$1', $cls)));
-            $this->template = $cls . '.twig';
+            $this->setTemplate($cls . '.twig');
         }
 
         return $this->template;
+    }
+
+    /**
+     * Set the value of the template
+     * 
+     * @param string $template template path
+     */
+    public function setTemplate($template)
+    {
+        $this->template = $template;
     }
 }
