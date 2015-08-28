@@ -2,8 +2,8 @@
 
 namespace Understory\Config;
 
-class Editor {
-
+class Editor
+{
     // Each array child is a format with it's own settings
     static protected $styles = array();
 
@@ -38,6 +38,6 @@ class Editor {
 
     public static function addStyleSheet()
     {
-        add_editor_style('assets/editor.css');
+        add_editor_style('assets/dist/editor.css');
     }
 }
