@@ -117,7 +117,7 @@ abstract class CustomPostType extends \TimberPost
     {
         $called_class = get_called_class();
 
-        static::$taxonomies[] = $taxonomyClass;
+        static::$taxonomies[$taxonomyClass::$taxonomy_name] = $taxonomyClass;
         \register_taxonomy_for_object_type($taxonomyClass::$taxonomy_name, $called_class::$cpt_name);
     }
 

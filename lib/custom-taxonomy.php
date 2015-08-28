@@ -22,7 +22,7 @@ abstract class CustomTaxonomy extends \TimberTerm
         // Slugify the name to use as post type name
         $called_class = get_called_class();
         preg_match('@\\\\([\w]+)$@', $called_class, $matches);
-        $taxonomy_name = strtolower(preg_replace('~[^\\pL\d]+~u', '-', $matches[1]));
+        $taxonomy_name = trim(strtolower(preg_replace('/(?<=\\w)(?=[A-Z])/',"-$1", $matches[1])));
         
         // Default plural
         if (empty($plural)) {
