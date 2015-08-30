@@ -35,7 +35,7 @@ class Site extends \TimberSite
 
     protected function addThemeSupport()
     {
-        foreach (self::$themeSupport as $themeSupport) {
+        foreach (static::$themeSupport as $themeSupport) {
             \add_theme_support($themeSupport);
         }
     }
