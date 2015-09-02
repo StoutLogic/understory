@@ -8,15 +8,18 @@ class Site extends \TimberSite
 {
     protected static $themeSupport = array();
     protected $optionPages = array();
-
+    protected $editor;
 
     public function __construct()
     {
-        $editorConfig = new Config\Editor();
+        
 
         \Timber::$dirname = 'app/templates';
 
         self::addThemeSupport();
+        
+        static::registerComponents();
+        static::addEditorConfig();
 
         add_filter('timber_context', array( $this, 'addToContext' ));
         add_filter('get_twig', array( $this, 'addToTwig' ));
@@ -29,8 +32,19 @@ class Site extends \TimberSite
         add_action('wp_enqueue_scripts', array( $this, 'enqueScripts'), 100);
         add_action('wp_enqueue_scripts', array( $this, 'enqueDefaultStylesheets'), 100000);
         add_action('wp_enqueue_scripts', array( $this, 'enqueStylesheets'), 102);
+        add_action('admin_enqueue_scripts', array( $this, 'enqueAdminStylesheets'), 100);
 
         parent::__construct();
+    }
+
+    protected function registerComponents()
+    {
+
+    }
+
+    protected function addEditorConfig()
+    {
+        $this->editor = new Config\Editor();
     }
 
     protected function addThemeSupport()
@@ -46,7 +60,12 @@ class Site extends \TimberSite
 
     public function enqueDefaultStylesheets()
     {
-        wp_enqueue_style( 'site', get_template_directory_uri().'/assets/dist/site.css' );
+        wp_enqueue_style('site', get_template_directory_uri().'/assets/dist/site.css');
+    }
+
+    public function enqueAdminStylesheets()
+    {
+
     }
 
     public function enqueScripts()
