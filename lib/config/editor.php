@@ -21,17 +21,19 @@ class Editor
 
     public function addStyleSelectField($buttons)
     {
-        array_unshift($buttons, 'styleselect');
+        if (static::$styles) {
+            array_unshift($buttons, 'styleselect');
+        }
 
         return $buttons;
     }
 
     public function addStyles($init_array)
     {
-        if (self::$styles) {
+        if (static::$styles) {
             // Insert the array, JSON ENCODED, into 'style_formats'
-            if (count(self::$styles) > 0) {
-                $init_array['style_formats'] = json_encode(self::$styles);
+            if (count(static::$styles) > 0) {
+                $init_array['style_formats'] = json_encode(static::$styles);
             }
 
         }
@@ -40,7 +42,6 @@ class Editor
 
     public function addStyleSheet()
     {
-        
-        exit();
+
     }
 }
