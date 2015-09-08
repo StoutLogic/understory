@@ -14,7 +14,7 @@ class Editor
 
     protected function init()
     {
-        add_filter('mce_buttons_2', array($this, 'addStyleSelectField'));
+        add_filter('mce_buttons_2', array($this, 'addStyleSelectField'), 20);
         add_filter('tiny_mce_before_init', array($this, 'addStyles'));
         add_action('init', array($this, 'addStyleSheet'));
     }
