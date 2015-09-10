@@ -29,7 +29,7 @@ class Site extends \TimberSite
         add_action('init', array( $this, 'registerNavigations' ));
         add_action('init', array( $this, 'registerOptionPages' ));
 
-        add_action('admin_init', array( $this, 'customizeAdminMenu' ), 10);
+        add_action('admin_menu', array( $this, 'customizeAdminMenu' ), 10);
 
         add_action('wp_enqueue_scripts', array( $this, 'enqueScripts'), 100);
         add_action('wp_enqueue_scripts', array( $this, 'enqueDefaultStylesheets'), 100000);
