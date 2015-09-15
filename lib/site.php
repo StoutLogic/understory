@@ -9,12 +9,14 @@ class Site extends \TimberSite
     protected static $themeSupport = array();
     protected $optionPages = array();
     protected $editor;
+    protected $currentUser;
 
     public function __construct()
     {
         
 
         \Timber::$dirname = 'app/templates';
+        $this->currentUser = new User();
 
         self::addThemeSupport();
         
@@ -104,6 +106,12 @@ class Site extends \TimberSite
     {
         $context['body_class'] = "site ".$context['body_class'];
         $context['site'] = $this;
+        return $context;
+    }
+
+    public function addCurrentUserToContext($context)
+    {
+        $context['current_user'] = $this->currentUser;
         return $context;
     }
 
