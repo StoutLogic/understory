@@ -21,7 +21,7 @@ class Site extends \TimberSite
         static::registerComponents();
         static::addEditorConfig();
 
-        add_filter('timber_context', array( $this, 'addToContext' ));
+        add_filter('timber_context', array( $this, 'initializeContext' ));
         add_filter('get_twig', array( $this, 'addToTwig' ));
 
         add_action('init', array( $this, 'registerTaxonomies' ), 10);
@@ -100,7 +100,7 @@ class Site extends \TimberSite
         
     }
 
-    public function addToContext($context)
+    public function initializeContext($context)
     {
         $context['body_class'] = "site ".$context['body_class'];
         $context['site'] = $this;
