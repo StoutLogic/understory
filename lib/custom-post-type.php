@@ -2,8 +2,6 @@
 
 namespace Understory;
 
-//use StoutLogic\Wordpress\Taxonomies;
-
 abstract class CustomPostType extends \TimberPost
 {
     // These static variables must be implemented in each child cliass
@@ -19,11 +17,31 @@ abstract class CustomPostType extends \TimberPost
      */
     public function __construct($post = null)
     {
+        // Create an instance of Core since we are not extending it
+        $this->core = new Core($this);
+
         if ($post !== null) {
             $this->init($post->ID);
         } else {
             parent::__construct($post);
         }
+
+    }
+
+    /**
+     *  Overwrite TimberCore's __get method with our own Core __get method
+     */
+    function __get($field)
+    {
+        $this->core->__get($field);
+    }
+
+    /**
+     *  Overwrite TimberCore's import method with our own Core import method
+     */
+    function import($info, $force = false)
+    {
+        $this->core->import($info, $force);
     }
 
     /**
@@ -77,7 +95,7 @@ abstract class CustomPostType extends \TimberPost
         // Create Custom Post Type name, strip out namespaces and slugify
         $called_class = get_called_class();
         preg_match('@\\\\([\w]+)$@', $called_class, $matches);
-        $cpt_name = strtolower(preg_replace('/(?<=\\w)(?=[A-Z])/',"-$1", $matches[1]));
+        $cpt_name = strtolower(preg_replace('/(?<=\\w)(?=[A-Z])/', "-$1", $matches[1]));
 
         $error = \register_post_type($cpt_name, $args);
 
