@@ -19,20 +19,23 @@ class Site extends \TimberSite
         static::registerComponents();
         static::addEditorConfig();
 
-        add_filter('timber_context', array( $this, 'initializeContext' ));
-        add_filter('get_twig', array( $this, 'addToTwig' ));
+        \add_filter('timber_context', array( $this, 'initializeContext' ));
+        \add_filter('get_twig', array( $this, 'addToTwig' ));
 
-        add_action('init', array( $this, 'registerTaxonomies' ), 10);
-        add_action('init', array( $this, 'registerPostTypes' ), 11);
-        add_action('init', array( $this, 'registerNavigations' ));
-        add_action('init', array( $this, 'registerOptionPages' ));
+        \add_action('init', array( $this, 'registerTaxonomies' ), 10);
+        \add_action('init', array( $this, 'registerPostTypes' ), 11);
+        \add_action('init', array( $this, 'registerNavigations' ));
+        \add_action('init', array( $this, 'registerOptionPages' ));
 
-        add_action('admin_menu', array( $this, 'customizeAdminMenu' ), 10);
+        \add_action('admin_menu', array( $this, 'customizeAdminMenu' ), 10);
 
-        add_action('wp_enqueue_scripts', array( $this, 'enqueScripts'), 100);
-        add_action('wp_enqueue_scripts', array( $this, 'enqueDefaultStylesheets'), 100000);
-        add_action('wp_enqueue_scripts', array( $this, 'enqueStylesheets'), 102);
-        add_action('admin_enqueue_scripts', array( $this, 'enqueAdminStylesheets'), 100);
+        \add_action('wp_enqueue_scripts', array( $this, 'enqueScripts'), 100);
+        \add_action('wp_enqueue_scripts', array( $this, 'enqueDefaultStylesheets'), 100000);
+        \add_action('wp_enqueue_scripts', array( $this, 'enqueStylesheets'), 102);
+        \add_action('admin_enqueue_scripts', array( $this, 'enqueAdminStylesheets'), 100);
+
+        // Warm custom template cache
+        \get_page_templates();
 
         parent::__construct();
     }
@@ -60,7 +63,7 @@ class Site extends \TimberSite
 
     public function enqueDefaultStylesheets()
     {
-        wp_enqueue_style('site', get_template_directory_uri().'/assets/dist/site.css');
+        \wp_enqueue_style('site', get_template_directory_uri().'/assets/dist/site.css');
     }
 
     public function enqueAdminStylesheets()

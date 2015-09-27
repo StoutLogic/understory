@@ -9,3 +9,4 @@ Author URI: http://stoutlogic.com/
 
 // Bootstrap
 require_once('lib/autoload.php');
+require_once('lib/init.php');
