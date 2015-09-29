@@ -12,7 +12,7 @@ namespace Understory;
 /**
  * Understory View
  */
-class View
+class View 
 {
     /**
      * Path of the template. Leave null to auto generate based on namespace and
@@ -20,6 +20,11 @@ class View
      * @var string
      */
     private $template = '';
+
+    public function __construct()
+    {
+
+    }
 
     /**
      * Return the template file. It will first check to see if the $template

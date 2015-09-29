@@ -31,17 +31,26 @@ abstract class CustomPostType extends \TimberPost
     /**
      *  Overwrite TimberCore's __get method with our own Core __get method
      */
-    function __get($field)
+    public function __call($field, $args)
     {
-        $this->core->__get($field);
+        return $this->core->__call($field, $args);
+    }
+
+
+    /**
+     *  Overwrite TimberCore's __get method with our own Core __get method
+     */
+    public function __get($field)
+    {
+        return $this->core->__get($field);
     }
 
     /**
      *  Overwrite TimberCore's import method with our own Core import method
      */
-    function import($info, $force = false)
+    public function import($info, $force = false)
     {
-        $this->core->import($info, $force);
+        return $this->core->import($info, $force);
     }
 
     /**
@@ -120,6 +129,7 @@ abstract class CustomPostType extends \TimberPost
     public static function registerPostTypeClass($cpt_name)
     {
         $called_class = get_called_class();
+        $called_class::$post_types[$cpt_name] = $called_class;
 
         self::$post_types[$cpt_name] = $called_class;
     }
@@ -149,5 +159,62 @@ abstract class CustomPostType extends \TimberPost
     {
         $post_type_array[] = self::$cpt_name;
         return $post_type_array;
+    }
+
+    public static function findRecent($limit = -1, $offset = 0, $args = array())
+    {
+        return self::findAll($limit, $offset, $args);
+    }
+
+    public static function findAll($limit = -1, $offset = 0, $args = array())
+    {
+        $called_class = get_called_class();
+
+        $args = array_merge(array(
+            'post_type' => array_keys($called_class::$post_types),
+            'posts_per_page' => $limit,
+            'offset' => $offset,
+        ), $args);
+
+        $results =  \Timber::get_posts($args, $called_class::$post_types, true);
+        return $results;
+    }
+
+    /**
+     * Find posts by id
+     *
+     * @param  mixed $id a single or array of ids
+     * @return array     Array of Articles
+     */
+    public static function find($id)
+    {
+        if (!is_array($id)) {
+            $id = array($id);
+        }
+
+        return self::findRecent(-1, 0, array(
+            'post__in' => $id
+        ));
+    }
+
+    /**
+     * Because TimberPost defines the function category(), our magic
+     * __get() method never gets called when trying to use .category in a 
+     * twig template. This is our work around: 
+     *
+     * If the called class has a function getCategory defined, call that.
+     * Otherwise call TimberPost::category()
+     * 
+     * @return mixed    Category
+     */
+    public function category()
+    {
+        $called_class = get_called_class();
+
+        if (method_exists($called_class, 'getCategory')) {
+            return $called_class::getCategory();
+        } else {
+            return parent::category();
+        }
     }
 }
