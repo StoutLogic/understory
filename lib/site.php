@@ -34,6 +34,8 @@ class Site extends \TimberSite
         \add_action('wp_enqueue_scripts', array( $this, 'enqueStylesheets'), 102);
         \add_action('admin_enqueue_scripts', array( $this, 'enqueAdminStylesheets'), 100);
 
+        \add_filter( 'wp_title', array( $this, 'wpTitle' ) );
+
         // Warm custom template cache
         \get_page_templates();
 
@@ -106,6 +108,14 @@ class Site extends \TimberSite
         $context['body_class'] = "site ".$context['body_class'];
         $context['site'] = $this;
         return $context;
+    }
+
+    function wpTitle( $title )
+    {
+      if( empty( $title ) && ( is_home() || is_front_page() ) ) {
+        return $this->name;
+      }
+      return $title . ' | ' . $this->name;
     }
 
     public function addToTwig($twig)
