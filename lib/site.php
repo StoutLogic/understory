@@ -10,6 +10,8 @@ class Site extends \TimberSite
     protected $optionPages = array();
     protected $editor;
 
+    protected $pageTitle;
+
     public function __construct()
     {
         \Timber::$dirname = 'app/templates';
@@ -34,7 +36,7 @@ class Site extends \TimberSite
         \add_action('wp_enqueue_scripts', array( $this, 'enqueStylesheets'), 102);
         \add_action('admin_enqueue_scripts', array( $this, 'enqueAdminStylesheets'), 100);
 
-        \add_filter( 'wp_title', array( $this, 'wpTitle' ) );
+        \add_filter('wp_title', array( $this, 'wpTitle' ));
 
         // Warm custom template cache
         \get_page_templates();
@@ -110,12 +112,27 @@ class Site extends \TimberSite
         return $context;
     }
 
-    function wpTitle( $title )
+    public function setPageTitle($title)
     {
-      if( empty( $title ) && ( is_home() || is_front_page() ) ) {
-        return $this->name;
-      }
-      return $title . ' | ' . $this->name;
+        $this->pageTitle = $title;
+    }
+
+    public function getPageTitle()
+    {
+        return $this->pageTitle;
+    }
+
+    public function wpTitle($title)
+    {
+        if (empty($title)) {
+            if (( is_home() || is_front_page() )) {
+                return $this->name;
+            } else {
+                $title = $this->getPageTitle();
+            }
+        }
+        
+        return $title . ' | ' . $this->name;
     }
 
     public function addToTwig($twig)
