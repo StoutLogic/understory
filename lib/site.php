@@ -39,7 +39,9 @@ class Site extends \TimberSite
         \add_filter('wp_title', array( $this, 'wpTitle' ));
 
         // Warm custom template cache
-        \get_page_templates();
+        if (function_exists('\get_page_templates')) {
+            \get_page_templates();
+        }
 
         parent::__construct();
     }
