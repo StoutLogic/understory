@@ -39,11 +39,14 @@ class Site extends \TimberSite
         \add_filter('wp_title', array( $this, 'wpTitle' ));
 
         // Warm custom template cache
-        if (function_exists('\get_page_templates')) {
-            \get_page_templates();
-        }
-
+        \add_action('init', array( $this, 'loadPageTemplates' ), 1);
+        
         parent::__construct();
+    }
+
+    public function loadPageTemplates()
+    {
+        \wp_get_theme()->get_page_templates(null);
     }
 
     protected function registerComponents()
