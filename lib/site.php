@@ -184,12 +184,17 @@ class Site extends \TimberSite
         if (strpos($postTypeClass, $this->getSiteNameSpace()) === false) {
             $postTypeClass = $this->getSiteNameSpace().$postTypeClass;
         }
-        
+
         $postTypeClass::registerPostType();
     }
 
     public function registerTaxonomy($taxonomyClass)
     {
+        // Append the full namespace to the classname if it doesn't exist
+        if (strpos($taxonomyClass, $this->getSiteNameSpace()) === false) {
+            $taxonomyClass = $this->getSiteNameSpace().$taxonomyClass;
+        }
+        
         $taxonomyClass::registerTaxonomy();
     }
 
