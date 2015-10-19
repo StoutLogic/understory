@@ -10,6 +10,8 @@ class Site extends \TimberSite
     protected $optionPages = array();
     protected $editor;
 
+    protected $views = array();
+
     protected $pageTitle;
 
     public function __construct()
@@ -26,6 +28,7 @@ class Site extends \TimberSite
 
         \add_action('init', array( $this, 'registerTaxonomies' ), 10);
         \add_action('init', array( $this, 'registerPostTypes' ), 11);
+        \add_action('init', array( $this, 'registerViews' ), 12);
         \add_action('init', array( $this, 'registerNavigations' ));
         \add_action('init', array( $this, 'registerOptionPages' ));
 
@@ -37,6 +40,8 @@ class Site extends \TimberSite
         \add_action('admin_enqueue_scripts', array( $this, 'enqueAdminStylesheets'), 100);
 
         \add_filter('wp_title', array( $this, 'wpTitle' ));
+
+        \add_filter('template_include', array( $this, 'renderView' ), 1000);
 
         // Warm custom template cache
         \add_action('init', array( $this, 'loadPageTemplates' ), 1);
@@ -72,7 +77,7 @@ class Site extends \TimberSite
 
     public function enqueDefaultStylesheets()
     {
-        \wp_enqueue_style('site', get_template_directory_uri().'/assets/dist/site.css');
+        \wp_enqueue_style('site', \get_template_directory_uri().'/assets/dist/site.css');
     }
 
     public function enqueAdminStylesheets()
@@ -90,9 +95,72 @@ class Site extends \TimberSite
         
     }
 
+    private function getFiles($dir)
+    {
+        $themeDir = \get_stylesheet_directory();
+        $files = scandir($themeDir . '/' . $dir);
+
+        $files = array_map(function ($file) {
+            return basename($file, '.php');
+        }, array_filter($files, function ($file) {
+            $fileInfo = pathinfo($file);
+            return $fileInfo['extension'] === 'php';
+        }));
+
+        return $files;
+    }
+
+    private function fileToClass($file)
+    {
+        $file = ucwords($file, '-');
+        $file = str_replace('-', '', $file);
+        return $file;
+    }
+
+    private function getSiteNameSpace()
+    {
+        $called_class = get_called_class();
+        return str_replace('Lib\Site', '', $called_class);
+    }
+
+    /**
+     * Register the post types in app/models automatically
+     */
     public function registerPostTypes()
     {
-        
+        $modelFiles = $this->getFiles('app/models');
+
+        foreach ($modelFiles as $modelFile) {
+            $modelClass = $this->getSiteNameSpace().'Models\\'.$this->fileToClass($modelFile);
+            $modelClass::registerPostType();
+        }
+    }
+
+    public function isUnderStoryView($viewFile)
+    {
+        $filePath = \get_stylesheet_directory().'/app/views/'.$viewFile.'.php';
+        if (!file_exists($filePath)) {
+            return false;
+        }
+
+        $file_contents = file_get_contents($filePath);
+        return strpos($file_contents, '\Understory\View') !== false;
+    }
+
+    /**
+     * Register the views in app/models automatically
+     */
+    public function registerViews()
+    {
+        $viewFiles = $this->getFiles('app/views');
+
+        foreach ($viewFiles as $viewFile) {
+            // Make sure the viewFile is a class
+            if ($this->isUnderStoryView($viewFile)) {
+                $viewClass = $this->getSiteNameSpace().'Views\\'.$this->fileToClass($viewFile);
+                $this->registerView($viewClass);
+            }
+        }
     }
 
     public function registerTaxonomies()
@@ -108,6 +176,60 @@ class Site extends \TimberSite
     public function customizeAdminMenu()
     {
         
+    }
+
+    public function registerPostType($postTypeClass)
+    {
+        // Append the full namespace to the classname if it doesn't exist
+        if (strpos($postTypeClass, $this->getSiteNameSpace()) === false) {
+            $postTypeClass = $this->getSiteNameSpace().$postTypeClass;
+        }
+        
+        $postTypeClass::registerPostType();
+    }
+
+    public function registerTaxonomy($taxonomyClass)
+    {
+        $taxonomyClass::registerTaxonomy();
+    }
+
+    public function registerView($viewClass)
+    {
+        // Append the full namespace to the classname if it doesn't exist
+        if (strpos($viewClass, $this->getSiteNameSpace()) === false) {
+            $viewClass = $this->getSiteNameSpace().$viewClass;
+        }
+
+        // Index the viewClass by its file name, so we can render it
+        // when WordPress tries to include that file
+        $this->views[\get_stylesheet_directory().'/app/views'.$viewClass::getFileName().'.php'] = $viewClass;
+
+        $viewClass::registerView();
+    }
+
+    /**
+     * Called by the WordPress include_template filter, so we can
+     * intercept it and render our registered View object instead.
+     *
+     * This is not a great solution becuase WordPress filters should not
+     * cause side effects, but in this case, on render is the only time
+     * this filter should be called. Still, we will acknowledge that
+     * it is a hack
+     *
+     * @param  string $template template file
+     * @return string           tempalte file, return false if rendering
+     */
+    public function renderView($template)
+    {
+        // echo "RENDER VIEW ";
+        if (array_key_exists($template, $this->views)) {
+            $view = new $this->views[$template];
+            $view->render();
+            $template = "";
+        }
+
+        // echo "WORDPRESS RENDER $template ";
+        return $template;
     }
 
     public function initializeContext($context)

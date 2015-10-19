@@ -12,7 +12,7 @@ namespace Understory;
 /**
  * Understory View
  */
-class View 
+class View
 {
     /**
      * Path of the template. Leave null to auto generate based on namespace and
@@ -20,10 +20,37 @@ class View
      * @var string
      */
     private $template = '';
+    private $context = array();
 
     public function __construct()
     {
 
+    }
+
+    public static function getFileName()
+    {
+        $called_class = get_called_class();
+        $cls = preg_replace('/.*Views/', '', $called_class);
+        $cls = strtolower(str_replace('_', '', preg_replace('/(?<=\\w)(?=[A-Z])/', '-$1', $cls)));
+
+        return str_replace('\\', DIRECTORY_SEPARATOR, $cls);
+    }
+
+    /**
+     * Generate a Template file path  from the namespace (after \Views) and
+     * class name of the view. Be sure to keep your View in the
+     * \Views namespace.
+     *
+     * @return string template file path
+     */
+    public static function generateTemplateFileName()
+    {
+        return self::getFileName() . '.twig';
+    }
+
+    public static function registerView()
+    {
+      
     }
 
     /**
@@ -36,25 +63,43 @@ class View
      */
     public function getTemplate()
     {
-        if (empty( $this->template)) {
-            $called_class = get_called_class();
-            $cls = preg_replace('/.*Views/', '', $called_class);
-            $cls = strtolower(str_replace('_', '', preg_replace('/(?<=\\w)(?=[A-Z])/', '-$1', $cls)));
-            $this->setTemplate($cls . '.twig');
+        if (empty($this->template)) {
+            $this->setTemplate(self::generateTemplateFileName());
         }
 
         return $this->template;
     }
 
     /**
-     * Manually set the path of the template from the base 'templates' directory. 
-     * Set to empty string or don't set to autogenerate the template path 
+     * Manually set the path of the template from the base 'templates' directory.
+     * Set to empty string or don't set to autogenerate the template path
      * from the namespace and class name.
-     * 
+     *
      * @param string $template template path
      */
     public function setTemplate($template)
     {
         $this->template = $template;
+    }
+
+
+    public function getContext()
+    {
+        if (!$this->context) {
+            $this->context = \Timber::get_context();
+        }
+
+        return $this->context;
+    }
+
+    public function setContext($key, $value)
+    {
+        $this->getContext();
+        $this->context[$key] = $value;
+    }
+
+    public function render()
+    {
+        \Timber::render($this->getTemplate(), $this->getContext());
     }
 }
