@@ -32,4 +32,19 @@ class OptionPage
             $page = acf_add_options_page($this->config);
         }
     }
+
+    public function getTitle()
+    {
+        return $this->title;
+    }
+
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    public function getOption($optionName)
+    {
+        return \get_option($this->getId().'_'.$optionName);
+    }
 }
