@@ -14,6 +14,8 @@ namespace Understory;
  */
 class View
 {
+    use Core;
+
     /**
      * Path of the template. Leave null to auto generate based on namespace and
      * class name.

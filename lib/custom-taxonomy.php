@@ -4,6 +4,8 @@ namespace Understory;
 
 abstract class CustomTaxonomy extends \TimberTerm
 {
+    use Core;
+
     public static $taxonomy_name;
 
     public $core;
@@ -11,37 +13,10 @@ abstract class CustomTaxonomy extends \TimberTerm
     function __construct($tid = null, $tax = '') {
 
         // Create an instance of Core since we are not extending it
-        $this->core = new Core($this);
+        // $this->core = new Core($this);
 
         parent::__construct($tid, $tax);
     }
-
-
-    /**
-     *  Overwrite TimberCore's __call method with our own Core __call method
-     */
-    public function __call($field, $args)
-    {
-        return $this->core->__call($field, $args);
-    }
-
-
-    /**
-     *  Overwrite TimberCore's __get method with our own Core __get method
-     */
-    public function __get($field)
-    {
-        return $this->core->__get($field);
-    }
-
-    /**
-     *  Overwrite TimberCore's import method with our own Core import method
-     */
-    public function import($info, $force = false)
-    {
-        $this->core->import($info, $force);
-    }
-
 
     /**
      * Boilerplate code for registering a Custom Taxonomy

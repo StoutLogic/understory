@@ -12,52 +12,28 @@ namespace Understory;
  * These functions slightly alter TimberCore's functionality, to allow
  * for getters to be used.
  */
-class Core
+trait Core
 {
-    private $thisObj;
-
-    /**
-     * Create a new instance of Core if not extending Core
-     * @param Object $obj should be $this of the object instantiating it.
-     */
-    public function __construct($obj)
-    {
-        $this->thisObj = $obj;
-    }
-
-    /**
-     * Return the correct value of $this
-     * @return Object current or passed in value of $this
-     */
-    private function getThisObj()
-    {
-        if (isset($this->thisObj)) {
-            return $this->thisObj;
-        }
-
-        return $this;
-    }
-
     public function __call($field, $args)
     {
-        return $this->getThisObj()->__get($field);
+        return $this->__get($field);
     }
 
     public function __get($field)
     {
-        if (method_exists($this->getThisObj(), 'get'.$field)) {
-            return $this->getThisObj()->{'get'.$field}();
+        if (method_exists($this, 'get'.$field)) {
+            return $this->{'get'.$field}();
         } else {
-            if (isset( $this->getThisObj()->$field )) {
-                return $this->getThisObj()->$field;
+            if (isset( $this->$field )) {
+                return $this->$field;
             }
-            if ($meta_value = $this->getThisObj()->meta($field)) {
-                return $this->getThisObj()->$field = $meta_value;
+            if ($meta_value = $this->meta($field)) {
+                return $this->$field = $meta_value;
             }
-            if (method_exists($this->getThisObj(), $field)) {
-                return $this->getThisObj()->$field = $this->getThisObj()->$field();
+            if (method_exists($this, $field)) {
+                return $this->$field = $this->$field();
             }
-            return $this->getThisObj()->$field = false;
+            return $this->$field = false;
         }
     }
 
@@ -69,11 +45,11 @@ class Core
         if (is_array($info)) {
             foreach ($info as $key => $value) {
                 if (!empty( $key ) && $force) {
-                    $this->getThisObj()->$key = $value;
+                    $this->$key = $value;
                 } else if (!empty( $key )
-                        && !method_exists($this->getThisObj(), $key)
-                        && !method_exists($this->getThisObj(), 'get'.$key) ) {
-                    $this->getThisObj()->$key = $value;
+                        && !method_exists($this, $key)
+                        && !method_exists($this, 'get'.$key) ) {
+                    $this->$key = $value;
                 }
             }
         }

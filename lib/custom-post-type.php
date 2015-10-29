@@ -4,6 +4,8 @@ namespace Understory;
 
 abstract class CustomPostType extends \TimberPost
 {
+    use Core;
+    
     // These static variables must be implemented in each child cliass
     public static $cpt_name;
     protected static $taxonomies = array();
@@ -17,40 +19,12 @@ abstract class CustomPostType extends \TimberPost
      */
     public function __construct($post = null)
     {
-        // Create an instance of Core since we are not extending it
-        $this->core = new Core($this);
-
         if ($post !== null) {
             $this->init($post->ID);
         } else {
             parent::__construct($post);
         }
 
-    }
-
-    /**
-     *  Overwrite TimberCore's __get method with our own Core __get method
-     */
-    public function __call($field, $args)
-    {
-        return $this->core->__call($field, $args);
-    }
-
-
-    /**
-     *  Overwrite TimberCore's __get method with our own Core __get method
-     */
-    public function __get($field)
-    {
-        return $this->core->__get($field);
-    }
-
-    /**
-     *  Overwrite TimberCore's import method with our own Core import method
-     */
-    public function import($info, $force = false)
-    {
-        return $this->core->import($info, $force);
     }
 
     /**
