@@ -22,11 +22,31 @@ class View
      * @var string
      */
     private $template = '';
+    private $post;
     private $context = array();
 
     public function __construct()
     {
+        
+    }
 
+    public function getId()
+    {
+        return $this->getPost()->ID;
+    }
+
+    public function getPost()
+    {
+        if (!$this->post) {
+            $this->setPost(new \TimberPost);
+        }
+
+        return $this->post;
+    }
+
+    public function setPost($post)
+    {
+        $this->post = $post;
     }
 
     public static function getFileName()
