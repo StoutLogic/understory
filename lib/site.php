@@ -26,11 +26,11 @@ class Site extends \TimberSite
         \add_filter('timber_context', array( $this, 'initializeContext' ));
         \add_filter('get_twig', array( $this, 'addToTwig' ));
 
-        \add_action('init', array( $this, 'registerTaxonomies' ), 10);
-        \add_action('init', array( $this, 'registerPostTypes' ), 11);
-        \add_action('init', array( $this, 'registerViews' ), 12);
-        \add_action('init', array( $this, 'registerNavigations' ));
-        \add_action('init', array( $this, 'registerOptionPages' ));
+        \add_action('init', array( $this, 'registerOptionPages' ), 10);
+        \add_action('init', array( $this, 'registerNavigations' ), 11);
+        \add_action('init', array( $this, 'registerTaxonomies' ), 12);
+        \add_action('init', array( $this, 'registerPostTypes' ), 13);
+        \add_action('init', array( $this, 'registerViews' ), 14);
 
         \add_action('admin_menu', array( $this, 'customizeAdminMenu' ), 10);
 
