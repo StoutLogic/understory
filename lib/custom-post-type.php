@@ -19,7 +19,7 @@ abstract class CustomPostType extends \TimberPost implements HasMetaData
      */
     public function __construct($post = null)
     {
-        if ($post !== null) {
+        if (is_object($post)) {
             $this->init($post->ID);
         } else {
             parent::__construct($post);
