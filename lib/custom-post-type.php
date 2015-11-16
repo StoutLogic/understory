@@ -229,6 +229,6 @@ abstract class CustomPostType extends \TimberPost implements HasMetaData
      */
     public function setMetaValue($key, $value)
     {
-        \update_post_meta($this->ID, $key, true);
+        \update_post_meta($this->ID, $key, $value);
     }
 }
