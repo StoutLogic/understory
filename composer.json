@@ -17,5 +17,10 @@
         "installer-paths": {
             "vendor/timber": ["jarednova/timber"]
         }
+    },
+    "script": {
+        "post-package-install": [
+            "php -r \"copy('autoload-understory.php', '../autoload-understory.php');\""
+        ]
     }
 }
