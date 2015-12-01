@@ -19,7 +19,7 @@ abstract class CustomPostType extends \TimberPost implements HasMetaData
      */
     public function __construct($post = null)
     {
-        if ($post !== null) {
+        if (is_object($post)) {
             $this->init($post->ID);
         } else {
             parent::__construct($post);
@@ -158,7 +158,7 @@ abstract class CustomPostType extends \TimberPost implements HasMetaData
      * Find posts by id
      *
      * @param  mixed $id a single or array of ids
-     * @return array     Array of Articles
+     * @return array     Array of Posts
      */
     public static function find($id)
     {
@@ -169,6 +169,24 @@ abstract class CustomPostType extends \TimberPost implements HasMetaData
         return self::findRecent(-1, 0, array(
             'post__in' => $id
         ));
+    }
+
+    /**
+     * Find post by slug
+     *
+     * @param  string $slug  slug of post
+     * @return post     
+     */
+    public static function findBySlug($slug)
+    {
+        $called_class = get_called_class();
+
+        $args = array(
+            'post_type' => array_keys($called_class::$post_types),
+            'name' => $slug,
+        );
+
+        return \Timber::get_post($args, $called_class::$post_types);
     }
 
     /**
@@ -211,6 +229,6 @@ abstract class CustomPostType extends \TimberPost implements HasMetaData
      */
     public function setMetaValue($key, $value)
     {
-        \update_post_meta($this->ID, $key, true);
+        \update_post_meta($this->ID, $key, $value);
     }
 }
