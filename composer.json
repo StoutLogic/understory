@@ -1,5 +1,21 @@
 {
+    "name": "stoutlogic/understory",
+    "description": "A WordPress theme layer, built on Timber and Twig",
+    "type": "wordpress-muplugin",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Steve Pfisterer",
+            "email": "steve@stoutlogic.com"
+        }
+    ],
     "require": {
-        "tgmpa/tgm-plugin-activation": "^2.5"
+        "tgmpa/tgm-plugin-activation": "^2.5",
+        "jarednova/timber": "^0.22.2"
+    },
+    "extra": {
+        "installer-paths": {
+            "vendor/timber": ["jarednova/timber"]
+        }
     }
 }
