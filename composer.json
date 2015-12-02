@@ -2,7 +2,7 @@
     "name": "stoutlogic/understory",
     "description": "A WordPress theme layer, built on Timber and Twig",
     "type": "wordpress-muplugin",
-    "license": "MIT",
+    "license": "GPL-2.0+",
     "authors": [
         {
             "name": "Steve Pfisterer",
