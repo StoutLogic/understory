@@ -10,6 +10,8 @@
         }
     ],
     "require": {
+        "php": ">=5.3.0",
+        "composer/installers": "~1.0",
         "tgmpa/tgm-plugin-activation": "^2.5",
         "jarednova/timber": "^0.22.2"
     },
@@ -18,9 +20,4 @@
             "vendor/timber": ["jarednova/timber"]
         }
     },
-    "script": {
-        "post-package-install": [
-            "php -r \"copy('autoload-understory.php', '../autoload-understory.php');\""
-        ]
-    }
 }
