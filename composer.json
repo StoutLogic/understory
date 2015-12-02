@@ -19,5 +19,5 @@
         "installer-paths": {
             "vendor/timber": ["jarednova/timber"]
         }
-    },
+    }
 }
