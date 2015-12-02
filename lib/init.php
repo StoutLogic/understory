@@ -3,11 +3,6 @@
  * Understory Initialization
  */
 
-/** 
- * Initialize Timber Plugin
- */
-require_once dirname( __FILE__ ) . '/../vendor/timber/timber.php';
-
 /**
  * Allow theme to keep wordpress templates in app/views
  */
