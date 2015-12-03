@@ -4,7 +4,7 @@
  */
 
 /**
- * Allow theme to keep wordpress templates in app/views
+ * Allow theme to keep wordpress templates in app/views or app/Views
  */
 \add_filter('template_directory', function ($template_dir, $template, $theme_root) {
     if (!defined('TEMPLATEPATH')) {
