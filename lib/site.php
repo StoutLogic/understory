@@ -120,7 +120,7 @@ class Site extends \TimberSite
     private function getSiteNameSpace()
     {
         $called_class = get_called_class();
-        return str_replace('Lib\Site', '', $called_class);
+        return str_replace('Site', '', $called_class);
     }
 
     /**

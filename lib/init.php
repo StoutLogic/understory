@@ -10,6 +10,8 @@
     if (!defined('TEMPLATEPATH')) {
         if (file_exists($template_dir . '/app/views')) {
             $template_dir .= '/app/views';
+        } else if (file_exists($template_dir . '/app/Views')) {
+            $template_dir .= '/app/Views';
         }
     }
     return $template_dir;

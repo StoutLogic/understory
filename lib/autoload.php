@@ -15,7 +15,6 @@ function autoload($cls)
     }
 
     $cls = str_replace(__NAMESPACE__, '', $cls);
-    $cls = strtolower(str_replace('_', '', preg_replace('/(?<=\\w)(?=[A-Z])/', "-$1", $cls)));
     $path = dirname(__FILE__)  . str_replace('\\', DIRECTORY_SEPARATOR, $cls) . '.php';
 
     require_once($path);
