@@ -52,8 +52,7 @@ class View
     public static function getFileName()
     {
         $called_class = get_called_class();
-        $cls = preg_replace('/.*Views/', '', $called_class);
-        $cls = strtolower(str_replace('_', '', preg_replace('/(?<=\\w)(?=[A-Z])/', '-$1', $cls)));
+        $cls = preg_replace('/.*Views/i', '', $called_class);
 
         return str_replace('\\', DIRECTORY_SEPARATOR, $cls);
     }
