@@ -145,4 +145,28 @@ class View implements HasMetaData
     {
         \update_post_meta($this->getPost()->ID, $key, $value);
     }
+
+    /**
+     * If a method doesn't exist on the View, delegate to the Post
+     * @param  string $field property or method name
+     * @return mixed        returned value
+     */
+    public function __call($method_name, $args)
+    {
+        if (method_exists($this->getPost(), $method_name)) {
+            return call_user_func_array(array($this->getPost(), $method_name), $args);
+        } else {
+            return $this->__get($method_name);
+        }
+    }
+
+    /**
+     * If a property or method doesn't exist on the View, delegate to the Post
+     * @param  string $field property or method name
+     * @return mixed        returned value
+     */
+    public function __get($field)
+    {
+        return $this->getPost()->$field;
+    }
 }
