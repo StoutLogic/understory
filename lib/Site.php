@@ -209,7 +209,13 @@ class Site extends \TimberSite
         // when WordPress tries to include that file
         $viewPath = \get_stylesheet_directory().'/app/Views'.$viewClass::getFileName().'.php';
         if (!file_exists($viewPath)) {
-            $viewPath = str_replace('app/Views', 'app/views', $viewPath);
+            $viewPath = str_replace('app/Views', 'app/views', $viewPath);                    
+             if (!file_exists($viewPath)) {
+                $viewPath =  \get_stylesheet_directory().'/app/Views'.$viewClass::getFileName(false).'.php';            
+                 if (!file_exists($viewPath)) {
+                    $viewPath = str_replace('app/Views', 'app/views', $viewPath);                            
+                }
+            }
         }
         $this->views[$viewPath] = $viewClass;
 
@@ -230,14 +236,12 @@ class Site extends \TimberSite
      */
     public function renderView($template)
     {
-        // echo "RENDER VIEW ";
         if (array_key_exists($template, $this->views)) {
             $view = new $this->views[$template];
             $view->render();
             $template = "";
         }
 
-        // echo "WORDPRESS RENDER $template ";
         return $template;
     }
 

@@ -8,10 +8,10 @@
  */
 \add_filter('template_directory', function ($template_dir, $template, $theme_root) {
     if (!defined('TEMPLATEPATH')) {
-        if (file_exists($template_dir . '/app/views')) {
-            $template_dir .= '/app/views';
-        } else if (file_exists($template_dir . '/app/Views')) {
+        if (file_exists($template_dir . '/app/Views')) {
             $template_dir .= '/app/Views';
+        } else if (file_exists($template_dir . '/app/views')) {
+            $template_dir .= '/app/views';
         }
     }
     return $template_dir;

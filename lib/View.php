@@ -49,10 +49,14 @@ class View implements HasMetaData
         $this->post = $post;
     }
 
-    public static function getFileName()
+    public static function getFileName($camelCase = true)
     {
         $called_class = get_called_class();
         $cls = preg_replace('/.*Views/i', '', $called_class);
+
+        if ($camelCase == false) {
+            $cls = strtolower(str_replace('_', '', preg_replace('/(?<=\\w)(?=[A-Z])/', '-$1', $cls)));
+        }
 
         return str_replace('\\', DIRECTORY_SEPARATOR, $cls);
     }
@@ -66,7 +70,17 @@ class View implements HasMetaData
      */
     public static function generateTemplateFileName()
     {
-        return self::getFileName() . '.twig';
+        $template = self::getFileName() . '.twig';
+        $templatePath = preg_replace('/Views/i', 'templates', TEMPLATEPATH);
+        
+        if (!file_exists($templatePath . $template)) {
+            $templateWithDashes = self::getFileName(false) . '.twig';
+            if (file_exists($templatePath . $templateWithDashes)) {
+                return $templateWithDashes;
+            }
+        }
+
+        return $template;
     }
 
     public static function registerView()
