@@ -207,11 +207,11 @@ class Site extends \TimberSite
 
         // Index the viewClass by its file name, so we can render it
         // when WordPress tries to include that file
-        $viewPath = \get_stylesheet_directory().'/app/Views'.$viewClass::getFileName().'.php';
+        $viewPath = \get_stylesheet_directory().'/app/Views'.$viewClass::getFileName(false).'.php';
         if (!file_exists($viewPath)) {
             $viewPath = str_replace('app/Views', 'app/views', $viewPath);                    
              if (!file_exists($viewPath)) {
-                $viewPath =  \get_stylesheet_directory().'/app/Views'.$viewClass::getFileName(false).'.php';            
+                $viewPath =  \get_stylesheet_directory().'/app/Views'.$viewClass::getFileName().'.php';            
                  if (!file_exists($viewPath)) {
                     $viewPath = str_replace('app/Views', 'app/views', $viewPath);                            
                 }
