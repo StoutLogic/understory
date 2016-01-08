@@ -98,6 +98,9 @@ class Site extends \TimberSite
     private function getFiles($dir)
     {
         $themeDir = \get_stylesheet_directory();
+        if (!file_exists($themeDir . '/' . $dir)) {
+            return array();
+        }
         $files = scandir($themeDir . '/' . $dir);
 
         $files = array_map(function ($file) {
@@ -128,7 +131,8 @@ class Site extends \TimberSite
      */
     public function registerPostTypes()
     {
-        $modelFiles = $this->getFiles('app/models');
+        $modelFiles = $this->getFiles('app/Models');
+        $modelFiles = array_merge($modelFiles, $this->getFiles('app/models'));
 
         foreach ($modelFiles as $modelFile) {
             $modelClass = $this->getSiteNameSpace().'Models\\'.$this->fileToClass($modelFile);
@@ -138,9 +142,12 @@ class Site extends \TimberSite
 
     public function isUnderStoryView($viewFile)
     {
-        $filePath = \get_stylesheet_directory().'/app/views/'.$viewFile.'.php';
+        $filePath = \get_stylesheet_directory().'/app/Views/'.$viewFile.'.php';
         if (!file_exists($filePath)) {
-            return false;
+            $filePath = \get_stylesheet_directory().'/app/views/'.$viewFile.'.php';
+            if (!file_exists($filePath)) {
+                return false;
+            }
         }
 
         $file_contents = file_get_contents($filePath);
@@ -152,7 +159,8 @@ class Site extends \TimberSite
      */
     public function registerViews()
     {
-        $viewFiles = $this->getFiles('app/views');
+        $viewFiles = $this->getFiles('app/Views');
+        $viewFiles = array_merge($viewFiles, $this->getFiles('app/views'));
 
         foreach ($viewFiles as $viewFile) {
             // Make sure the viewFile is a class
