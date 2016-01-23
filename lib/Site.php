@@ -123,7 +123,9 @@ class Site extends \TimberSite
     private function getSiteNameSpace()
     {
         $called_class = get_called_class();
-        return str_replace('Site', '', $called_class);
+        $reflection = new \ReflectionClass($called_class);
+
+        return $reflection->getNamespaceName();
     }
 
     /**
@@ -135,7 +137,7 @@ class Site extends \TimberSite
         $modelFiles = array_merge($modelFiles, $this->getFiles('app/models'));
 
         foreach ($modelFiles as $modelFile) {
-            $modelClass = $this->getSiteNameSpace().'Models\\'.$this->fileToClass($modelFile);
+            $modelClass = $this->getSiteNameSpace().'\\Models\\'.$this->fileToClass($modelFile);
             $modelClass::registerPostType();
         }
     }
@@ -165,7 +167,7 @@ class Site extends \TimberSite
         foreach ($viewFiles as $viewFile) {
             // Make sure the viewFile is a class
             if ($this->isUnderStoryView($viewFile)) {
-                $viewClass = $this->getSiteNameSpace().'Views\\'.$this->fileToClass($viewFile);
+                $viewClass = $this->getSiteNameSpace().'\\Views\\'.$this->fileToClass($viewFile);
                 $this->registerView($viewClass);
             }
         }
