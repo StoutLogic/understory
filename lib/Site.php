@@ -192,7 +192,7 @@ class Site extends \TimberSite
     {
         // Append the full namespace to the classname if it doesn't exist
         if (strpos($postTypeClass, $this->getSiteNameSpace()) === false) {
-            $postTypeClass = $this->getSiteNameSpace().$postTypeClass;
+            $postTypeClass = $this->getSiteNameSpace().'\\'.$postTypeClass;
         }
 
         $postTypeClass::registerPostType();
