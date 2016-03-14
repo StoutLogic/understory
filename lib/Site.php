@@ -146,10 +146,7 @@ class Site extends \TimberSite
     {
         $filePath = \get_stylesheet_directory().'/app/Views/'.$viewFile.'.php';
         if (!file_exists($filePath)) {
-            $filePath = \get_stylesheet_directory().'/app/views/'.$viewFile.'.php';
-            if (!file_exists($filePath)) {
-                return false;
-            }
+            return false;
         }
 
         $file_contents = file_get_contents($filePath);
@@ -162,7 +159,6 @@ class Site extends \TimberSite
     public function registerViews()
     {
         $viewFiles = $this->getFiles('app/Views');
-        $viewFiles = array_merge($viewFiles, $this->getFiles('app/views'));
 
         foreach ($viewFiles as $viewFile) {
             // Make sure the viewFile is a class
@@ -217,16 +213,13 @@ class Site extends \TimberSite
 
         // Index the viewClass by its file name, so we can render it
         // when WordPress tries to include that file
-        $viewPath = \get_stylesheet_directory().'/app/Views'.$viewClass::getFileName(false).'.php';
+        $viewPath = \get_stylesheet_directory().'/app/Views'.$viewClass::getFileName().'.php';
+       
+        // View may have a WordPress style filename, like home.php or single-post.php
         if (!file_exists($viewPath)) {
-            $viewPath = str_replace('app/Views', 'app/views', $viewPath);                    
-             if (!file_exists($viewPath)) {
-                $viewPath =  \get_stylesheet_directory().'/app/Views'.$viewClass::getFileName().'.php';            
-                 if (!file_exists($viewPath)) {
-                    $viewPath = str_replace('app/Views', 'app/views', $viewPath);                            
-                }
-            }
+            $viewPath = \get_stylesheet_directory().'/app/Views'.$viewClass::getFileName(false).'.php';                      
         }
+
         $this->views[$viewPath] = $viewClass;
 
         $viewClass::registerView();
