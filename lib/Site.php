@@ -134,11 +134,12 @@ class Site extends \TimberSite
     public function registerPostTypes()
     {
         $modelFiles = $this->getFiles('app/Models');
-        $modelFiles = array_merge($modelFiles, $this->getFiles('app/models'));
 
         foreach ($modelFiles as $modelFile) {
             $modelClass = $this->getSiteNameSpace().'\\Models\\'.$this->fileToClass($modelFile);
-            $modelClass::registerPostType();
+            if (method_exists($modelClass, 'registerPostType')) {
+                $modelClass::registerPostType();   
+            }
         }
     }
 
