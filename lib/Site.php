@@ -172,7 +172,14 @@ class Site extends \TimberSite
 
     public function registerTaxonomies()
     {
-       
+       $taxonomyFiles = $this->getFiles('app/Taxonomy');
+
+        foreach ($taxonomyFiles as $taxonomyFile) {
+            $taxonomyClass = $this->getSiteNameSpace().'\\Taxonomies\\'.$this->fileToClass($taxonomyFile);
+            if (method_exists($taxonomyClass, 'registerTaxonomy')) {
+                $taxonomyClass::registerTaxonomy();   
+            }
+        }
     }
 
     public function registerOptionPages()
@@ -199,7 +206,7 @@ class Site extends \TimberSite
     {
         // Append the full namespace to the classname if it doesn't exist
         if (strpos($taxonomyClass, $this->getSiteNameSpace()) === false) {
-            $taxonomyClass = $this->getSiteNameSpace().$taxonomyClass;
+            $taxonomyClass = $this->getSiteNameSpace().'\\'.$taxonomyClass;
         }
         
         $taxonomyClass::registerTaxonomy();
