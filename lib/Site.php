@@ -222,13 +222,17 @@ class Site extends \TimberSite
         // Index the viewClass by its file name, so we can render it
         // when WordPress tries to include that file
         $viewPath = \get_stylesheet_directory().'/app/Views'.$viewClass::getFileName().'.php';
-       
-        // View may have a WordPress style filename, like home.php or single-post.php
-        if (!file_exists($viewPath)) {
-            $viewPath = \get_stylesheet_directory().'/app/Views'.$viewClass::getFileName(false).'.php';                      
+        if (file_exists($viewPath)) {
+            $this->views[$viewPath] = $viewClass;
         }
-
-        $this->views[$viewPath] = $viewClass;
+        
+        // View may have a WordPress style filename, like home.php or single-post.php
+        // Also on case insensative file systems, we need to make sure both Page.php and page.php load 
+        // the Page class
+        $viewPath = \get_stylesheet_directory().'/app/Views'.$viewClass::getFileName(false).'.php';
+        if (file_exists($viewPath)) {
+            $this->views[$viewPath] = $viewClass;
+        }       
 
         $viewClass::registerView();
     }
