@@ -4,7 +4,7 @@
  */
 
 /**
- * Allow theme to keep wordpress templates in app/views or app/Views
+ * Allow theme to keep wordpress templates in app/Views
  */
 \add_filter('template_directory', function ($template_dir, $template, $theme_root) {
     if (!defined('TEMPLATEPATH')) {
@@ -20,7 +20,6 @@
     if (count($page_templates) == 0) {
 
         $files = (array) $theme->get_files('php', 2);
-        // print_r($files);
 
         foreach ($files as $file => $full_path) {
             if (! preg_match('|Template Name:(.*)$|mi', file_get_contents($full_path), $header)) {
