@@ -26,7 +26,6 @@ class Site extends \TimberSite
         \add_filter('timber_context', array( $this, 'initializeContext' ));
         \add_filter('get_twig', array( $this, 'addToTwig' ));
 
-        \add_action('init', array( $this, 'registerOptionPages' ), 10);
         \add_action('init', array( $this, 'registerNavigations' ), 11);
         \add_action('init', array( $this, 'registerTaxonomies' ), 12);
         \add_action('init', array( $this, 'registerPostTypes' ), 13);
