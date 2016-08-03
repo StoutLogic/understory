@@ -1,80 +1,193 @@
 <?php
+namespace Understory;
+
+use Timber;
+
 /**
  * Understory View
  *
  * Extend your View with this class to gain Understory View functionality.
  *
- * @package Understory
+ * On subclasses, define a `configure` function that will register.
+ *
+ * Inside the `configure` method, use the `has` method to set any Registerables
+ * or MetaDataBindings like posts or pages. It will also set the values as
+ * context variables to be available in the Twig template. If no MetaDataBinding
+ * is specifeid the current Post will be assumed.
+ *
+ * Use the `setContext` method to bypass any registration and simple set a
+ * context variable.
+ *
+ * The twig template file name name is assumed to be identical to the View's
+ * file name. Use the `setTemplate` method to change it.
+ *
  */
-
-namespace Understory;
-
-/**
- * Understory View
- */
-class View implements HasMetaData
+abstract class View implements DelegatesMetaDataBinding, Registerable, Registry, Composition
 {
-    use Core;
-
     /**
      * Path of the template. Leave null to auto generate based on namespace and
      * class name.
+     *
      * @var string
      */
     private $template = '';
-    private $post;
-    private $context = array();
 
-    public function __construct()
+    /**
+     * Object that contains the meta values, usually the Post
+     *
+     * @var MetaDataBinding
+     */
+    private $metaDataBinding;
+
+    /**
+     * @var array
+     */
+    private $registry = [];
+
+    /**
+     * @var array
+     */
+    private $context = [];
+
+    /**
+     * @var array
+     */
+    private $contextRegistry = [];
+
+    /**
+     * Override to configure the view
+     */
+    protected function configure()
     {
-        
-    }
-
-    public function getId()
-    {
-        return $this->getPost()->ID;
-    }
-
-    public function getPost()
-    {
-        if (!$this->post) {
-            $this->setPost(new \TimberPost);
-        }
-
-        return $this->post;
-    }
-
-    public function setPost($post)
-    {
-        $this->post = $post;
-    }
-
-    public static function getFileName($camelCase = true)
-    {
-        $called_class = get_called_class();
-        $cls = preg_replace('/.*Views/i', '', $called_class);
-
-        if ($camelCase == false) {
-            $cls = strtolower(str_replace('_', '', preg_replace('/(?<=\\w)(?=[A-Z])/', '-$1', $cls)));
-        }
-
-        return str_replace('\\', DIRECTORY_SEPARATOR, $cls);
     }
 
     /**
-     * Generate a Template file path  from the namespace (after \Views) and
-     * class name of the view. Be sure to keep your View in the
-     * \Views namespace.
+     * @param string $key
+     * @param Registerable $registerable
+     */
+    public function addToRegistry($key, Registerable $registerable)
+    {
+        $this->registry[$key] = $registerable;
+    }
+
+    /**
+     * Implements Registry Interface method to register the items in the registery.
+     */
+    public function registerItemsInRegistry()
+    {
+        foreach ($this->registry as $registerable) {
+            $registerable->register();
+        }
+    }
+
+    /**
+     * Run when the view is registered. Configures the View and registers
+     * any items added to the View's registry.
+     */
+    public function register()
+    {
+        $this->configure();
+        $this->registerItemsInRegistry();
+    }
+
+    /**
+     * Implements `Composition::has`
+     * Registers any Registerables
+     * Sets as MetaDataBinding to delegate to, if $values is a MetaDataBinding
+     * Adds to the Timber context
+     * Adds as a class property
+     *
+     * @param string $property
+     * @param mixed $value
+     */
+    public function has($property, $value)
+    {
+        if ($value instanceof Registerable) {
+            $this->addToRegistry($property, $value);
+        }
+
+        if ($value instanceof DelegatesMetaDataBinding) {
+            $value->setMetaDataBinding($this);
+        }
+
+        $this->setContext($property, $value);
+
+        $this->$property = $value;
+    }
+
+    /**
+     * If the delegated MetaDataBinding hasn't been set yet,
+     * assume the current post, as a PostType object.
+     * Use to bind Registery items.
+     */
+    protected function initializeBindings()
+    {
+        if (!$this->getMetaDataBinding()) {
+            $post = new PostType;
+            $post->load();
+            $this->setMetaDataBinding($post);
+        }
+        $this->bindRegistryItems();
+    }
+
+    /**
+     * Set binding on any Registry items that delegate to a MetaDataBinding.
+     */
+    protected function bindRegistryItems()
+    {
+        foreach ($this->registry as $registerable) {
+            if ($registerable instanceof DelegatesMetaDataBinding) {
+                $registerable->setMetaDataBinding($this->getMetaDataBinding());
+            }
+        }
+    }
+
+    /**
+     * Return the file name based on the camel-cased class name.
+     *
+     * @return string
+     */
+    public function getFileName()
+    {
+        $calledClass = preg_replace('/.*Views/i', '', get_called_class());
+
+        return str_replace('\\', DIRECTORY_SEPARATOR, $calledClass);
+    }
+
+    /**
+     * Return the file name based on the class name that is dashed lower case.
+     * This file name format is used by WordPress.
+     *
+     * @return string
+     */
+    public function getFileNameDashedCase()
+    {
+        $calledClass = preg_replace('/.*Views/i', '', get_called_class());
+
+        $calledClass = strtolower(
+            str_replace(
+                '_',
+                '',
+                preg_replace('/(?<=\\w)(?=[A-Z])/', '-$1', $calledClass)
+            )
+        );
+
+        return str_replace('\\', DIRECTORY_SEPARATOR, $calledClass);
+    }
+
+    /**
+     * Generate a Template file path from the namespace (after \Views) and
+     * class name of the view. Be sure to keep Views in the \Views namespace.
      *
      * @return string template file path
      */
-    public static function generateTemplateFileName()
+    public function generateTemplateFileName()
     {
-        $template = self::getFileName() . '.twig';
+        $template = $this->getFileName() . '.twig';
         $templatePath = preg_replace('/Views/i', 'templates', TEMPLATEPATH);
-        
+
         if (!file_exists($templatePath . $template)) {
-            $templateWithDashes = self::getFileName(false) . '.twig';
+            $templateWithDashes = $this->getFileNameDashedCase() . '.twig';
             if (file_exists($templatePath . $templateWithDashes)) {
                 return $templateWithDashes;
             }
@@ -83,23 +196,18 @@ class View implements HasMetaData
         return $template;
     }
 
-    public static function registerView()
-    {
-      
-    }
-
     /**
      * Return the template file. It will first check to see if the $template
      * variable is defined, otherwise a template file path will be generated
      * from the namespace (after \Views) and class name of the view. Be sure
-     * to keep your View in the \Views namespace.
+     * to keep Views in the \Views namespace.
      *
      * @return string template file path
      */
     public function getTemplate()
     {
-        if (empty($this->template)) {
-            $this->setTemplate(self::generateTemplateFileName());
+        if (!$this->template) {
+            $this->setTemplate($this->generateTemplateFileName());
         }
 
         return $this->template;
@@ -117,70 +225,116 @@ class View implements HasMetaData
         $this->template = $template;
     }
 
-
+    /**
+     * Return the Timber context.
+     *
+     * @return array
+     */
     public function getContext()
     {
-        if (!$this->context) {
-            $this->context = \Timber::get_context();
+        return $this->context;
+    }
+
+    /**
+     * Set a variable to be available in the Twig template.
+     *
+     * @param string $key
+     * @param mixed $value
+     */
+    public function setContext($key, $value)
+    {
+        $this->contextRegistry[$key] = $value;
+    }
+
+    /**
+     * Return the Timber context with the View's context values added.
+     *
+     * @return array
+     */
+    private function initializeContext()
+    {
+        $this->context = Timber\Timber::get_context();
+
+        foreach ($this->contextRegistry as $key => $value) {
+            $this->context[$key] = $value;
         }
 
         return $this->context;
     }
 
-    public function setContext($key, $value)
-    {
-        $this->getContext();
-        $this->context[$key] = $value;
-    }
-
+    /**
+     * Render the View after initialzing the bindings and context
+     */
     public function render()
     {
-        \Timber::render($this->getTemplate(), $this->getContext());
+        $this->initializeBindings();
+        Timber\Timber::render($this->getTemplate(), $this->initializeContext());
     }
 
     /**
-     * Implentation of HasMetaData->getMetaValue
+     * Implentation of MetaDataBinding::getMetaValue
      *
-     * @param  string $metaFieldKey Key for the meta field
-     * @return string                Value of the meta field
+     * @param  string $key Key for the meta field
+     * @return string Value of the meta field
      */
     public function getMetaValue($key)
     {
-        return \get_post_meta($this->getPost()->ID, $key, true);
+        return $this->getMetaDataBinding()->getMetaValue($key);
     }
-    
+
     /**
-     * Implentation of HasMetaData->setMetaValue
+     * Implentation of MetaDataBinding::>setMetaValue
      *
      * @param  string $key Key for the meta field
      * @param  string $value Value for the meta field
      */
     public function setMetaValue($key, $value)
     {
-        \update_post_meta($this->getPost()->ID, $key, $value);
+        $this->getMetaDataBinding()->setMetaValue($key, $value);
     }
 
     /**
-     * If a method doesn't exist on the View, delegate to the Post
-     * @param  string $field property or method name
-     * @return mixed        returned value
+     * @return MetaDataBinding
      */
-    public function __call($method_name, $args)
+    public function getMetaDataBinding()
     {
-        if (method_exists($this->getPost(), $method_name)) {
-            return call_user_func_array(array($this->getPost(), $method_name), $args);
-        } else {
-            return $this->__get($method_name);
+        return $this->metaDataBinding;
+    }
+
+    /**
+     * @param MetaDataBinding $binding
+     */
+    public function setMetaDataBinding(MetaDataBinding $binding)
+    {
+        $this->metaDataBinding = $binding;
+    }
+
+    /**
+     * If a method doesn't exist on the View, delegate to the MataDataBinding
+     *
+     * @param string $methodName
+     * @param array $args
+     * @return mixed
+     */
+    public function __call($methodName, $args)
+    {
+        if (method_exists($this->getMetaDataBinding(), $methodName)) {
+            return call_user_func_array([$this->getMetaDataBinding(), $methodName], $args);
         }
+
+        // Return property
+        return $this->$methodName;
     }
 
     /**
-     * If a property or method doesn't exist on the View, delegate to the Post
-     * @param  string $field property or method name
-     * @return mixed        returned value
+     * If a property or method doesn't exist on the View, delegate to the
+     * MetaDataBinding
+     *
+     * @param  string $property
+     * @return mixed
      */
-    public function __get($field)
+    public function __get($property)
     {
-        return $this->getPost()->$field;
+        return $this->getMetaDataBinding()->$property;
     }
 }

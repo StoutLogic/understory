@@ -17,20 +17,21 @@ class Site extends \Timber\Site
 
     public function __construct()
     {
-        \Timber::$dirname = 'app/templates';
+        Timber::$dirname = 'app/templates';
 
         self::addThemeSupport();
-        
+
         static::registerComponents();
         static::addEditorConfig();
 
         \add_filter('timber_context', array( $this, 'initializeContext' ));
         \add_filter('get_twig', array( $this, 'addToTwig' ));
 
-        \add_action('init', array( $this, 'registerNavigations' ), 11);
+        \add_action('init', array( $this, 'registerViews' ), 11);
         \add_action('init', array( $this, 'registerTaxonomies' ), 12);
         \add_action('init', array( $this, 'registerPostTypes' ), 13);
-        \add_action('init', array( $this, 'registerViews' ), 14);
+        \add_action('init', array( $this, 'registerOptionPages' ), 14);
+        \add_action('init', array( $this, 'registerNavigations' ), 15);
 
         \add_action('admin_menu', array( $this, 'customizeAdminMenu' ), 10);
 
@@ -41,11 +42,11 @@ class Site extends \Timber\Site
 
         \add_filter('wp_title', array( $this, 'wpTitle' ));
 
-        \add_filter('template_include', array( $this, 'renderView' ), 1000);
+        \add_filter('template_include', array( $this, 'renderView' ), 100000);
 
         // Warm custom template cache
         \add_action('init', array( $this, 'loadPageTemplates' ), 1);
-        
+
         parent::__construct();
     }
 
@@ -56,7 +57,6 @@ class Site extends \Timber\Site
 
     protected function registerComponents()
     {
-
     }
 
     protected function addEditorConfig()
@@ -82,17 +82,14 @@ class Site extends \Timber\Site
 
     public function enqueAdminStylesheets()
     {
-
     }
 
     public function enqueScripts()
     {
-
     }
 
     public function registerNavigations()
     {
-        
     }
 
     private function getFiles($dir)
@@ -152,7 +149,7 @@ class Site extends \Timber\Site
         }
 
         $file_contents = file_get_contents($filePath);
-        return strpos($file_contents, '\Understory\View') !== false;
+        return strpos($file_contents, 'Understory\View') !== false;
     }
 
     /**
@@ -164,6 +161,7 @@ class Site extends \Timber\Site
 
         foreach ($viewFiles as $viewFile) {
             // Make sure the viewFile is a class
+
             if ($this->isUnderStoryView($viewFile)) {
                 $viewClass = $this->getSiteNameSpace().'\\Views\\'.$this->fileToClass($viewFile);
                 $this->registerView($viewClass);
@@ -186,12 +184,10 @@ class Site extends \Timber\Site
 
     public function registerOptionPages()
     {
-        
     }
 
     public function customizeAdminMenu()
     {
-        
     }
 
     public function registerPostType($postTypeClass)
@@ -213,22 +209,24 @@ class Site extends \Timber\Site
             $viewClass = $this->getSiteNameSpace().$viewClass;
         }
 
+        $view = new $viewClass();
+
         // Index the viewClass by its file name, so we can render it
         // when WordPress tries to include that file
-        $viewPath = \get_stylesheet_directory().'/app/Views'.$viewClass::getFileName().'.php';
+        $viewPath = \get_stylesheet_directory().'/app/Views'.$view->getFileName().'.php';
         if (file_exists($viewPath)) {
-            $this->views[$viewPath] = $viewClass;
+            $this->views[$viewPath] = $view;
         }
-        
-        // View may have a WordPress style filename, like home.php or single-post.php
-        // Also on case insensative file systems, we need to make sure both Page.php and page.php load 
-        // the Page class
-        $viewPath = \get_stylesheet_directory().'/app/Views'.$viewClass::getFileName(false).'.php';
-        if (file_exists($viewPath)) {
-            $this->views[$viewPath] = $viewClass;
-        }       
 
-        $viewClass::registerView();
+        // View may have a WordPress style filename, like home.php or single-post.php
+        // Also on case insensative file systems, we need to make sure both Page.php and page.php load
+        // the Page class
+        $viewPath = \get_stylesheet_directory().'/app/Views'.$view->getFileNameDashedCase().'.php';
+        if (file_exists($viewPath)) {
+            $this->views[$viewPath] = $view;
+        }
+
+        $view->register();
     }
 
     /**
@@ -246,8 +244,7 @@ class Site extends \Timber\Site
     public function renderView($template)
     {
         if (array_key_exists($template, $this->views)) {
-            $view = new $this->views[$template];
-            $view->render();
+            $this->views[$template]->render();
             $template = "";
         }
 
@@ -257,6 +254,7 @@ class Site extends \Timber\Site
     public function initializeContext($context)
     {
         $context['body_class'] = "site ".$context['body_class'];
+
         $context['site'] = $this;
         return $context;
     }
@@ -273,14 +271,16 @@ class Site extends \Timber\Site
 
     public function wpTitle($title)
     {
+        global $wp_query;
         if (empty($title)) {
-            if (( is_home() || is_front_page() )) {
+
+            if ((is_home() || is_front_page())) {
                 return $this->name;
             } else {
                 $title = $this->getPageTitle();
             }
         }
-        
+
         return $title . ' | ' . $this->name;
     }
 
