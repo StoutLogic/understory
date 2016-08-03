@@ -2,7 +2,7 @@
 
 namespace Understory;
 
-class User extends \TimberUser implements HasMetaData
+class User extends \TimberUser implements MetaDataBinding
 {
     public function isLoggedIn()
     {
@@ -14,7 +14,7 @@ class User extends \TimberUser implements HasMetaData
     }
 
     /**
-     * Implentation of HasMetaData->getMetaValue
+     * Implentation of MetaDataBinding::getMetaValue
      *
      * @param  string $metaFieldKey Key for the meta field
      * @return string                Value of the meta field
@@ -23,9 +23,9 @@ class User extends \TimberUser implements HasMetaData
     {
         return \get_user_meta($this->ID, $key, true);
     }
-    
+
     /**
-     * Implentation of HasMetaData->setMetaValue
+     * Implentation of MetaDataBinding::setMetaValue
      *
      * @param  string $key Key for the meta field
      * @param  string $value Value for the meta field
