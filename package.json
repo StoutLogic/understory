@@ -1,0 +1,12 @@
+{
+  "name": "understory",
+  "version": "1.0.0",
+  "description": "A WordPress theme layer, built on Timber and Twig.",
+  "author": "Steve Pfisterer <steve@stoutlogic.com>",
+  "license": "GPL-2.0+",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-notify": "^2.2.0",
+    "gulp-phpunit": "^0.14.0"
+  }
+}
