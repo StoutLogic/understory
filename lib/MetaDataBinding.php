@@ -2,7 +2,7 @@
 
 namespace Understory;
 
-interface HasMetaData
+interface MetaDataBinding
 {
     /**
      * Return the meta value
