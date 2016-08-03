@@ -3,8 +3,9 @@
 namespace Understory;
 
 use Understory\Config;
+use \Timber\Timber;
 
-class Site extends \TimberSite
+class Site extends \Timber\Site
 {
     protected static $themeSupport = array();
     protected $optionPages = array();
@@ -136,8 +137,9 @@ class Site extends \TimberSite
 
         foreach ($modelFiles as $modelFile) {
             $modelClass = $this->getSiteNameSpace().'\\Models\\'.$this->fileToClass($modelFile);
-            if (method_exists($modelClass, 'registerPostType')) {
-                $modelClass::registerPostType();   
+
+            if (new $modelClass instanceof CustomPostType) {
+                $this->registerPostType($modelClass);
             }
         }
     }
@@ -193,12 +195,8 @@ class Site extends \TimberSite
 
     public function registerPostType($postTypeClass)
     {
-        // Append the full namespace to the classname if it doesn't exist
-        if (strpos($postTypeClass, $this->getSiteNameSpace()) === false) {
-            $postTypeClass = $this->getSiteNameSpace().'\\'.$postTypeClass;
-        }
-
-        $postTypeClass::registerPostType();
+        $postType = new $postTypeClass();
+        $postType->register();
     }
 
     public function registerTaxonomy($taxonomyClass)
