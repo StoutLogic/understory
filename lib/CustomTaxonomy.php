@@ -2,110 +2,91 @@
 
 namespace Understory;
 
-abstract class CustomTaxonomy extends \TimberTerm implements HasMetaData
+abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable, Registry, Composition
 {
-    use Core;
-
-    public static $taxonomy_name;
+    private $taxonomy;
+    private $registry = [];
 
     public $core;
 
-    function __construct($tid = null, $tax = '')
+    function __construct($tid = null)
     {
-
-        // Create an instance of Core since we are not extending it
-        // $this->core = new Core($this);
-
-        parent::__construct($tid, $tax);
+        if ($tid) {
+            $this->setId($tid);
+        }
     }
 
-    /**
-     * Boilerplate code for registering a Custom Taxonomy
-     *
-     * @param  string $name     Name of the taxonomy (singular)
-     * @param  array  $labels   Labels for taxonomy
-     * @param  array  $args     Arguments for taxonomy
-     * @param  string $plural   Plural name of taxonomy if
-     *                          isn't a simple case with an appended 's'
-     */
-    public static function registerTaxonomy($name, $labels = array(), $args = array(), $plural = "")
+    public function getTaxonomy()
     {
-        $item = ucwords($name);
-
-        // Slugify the name to use as post type name
-        $called_class = get_called_class();
-        preg_match('@\\\\([\w]+)$@', $called_class, $matches);
-        $taxonomy_name = trim(strtolower(preg_replace('/(?<=\\w)(?=[A-Z])/', "-$1", $matches[1])));
-        
-        // Default plural
-        if (empty($plural)) {
-            $plural = $item."s";
-        }
-
-        $labels = array_merge(array(
-            'name' => _x(sprintf('%s', $plural), 'Taxonomy General Name'),
-            'singular_name' => _x(sprintf('%s', $item), 'Taxonomy Singular Name'),
-            'menu_name' => __(sprintf('%s Taxonomy', $item)),
-            'all_items' => __(sprintf('All %s', $plural)),
-            'parent_item' => __(sprintf('Parent %s', $item)),
-            'parent_item_colon' => __(sprintf('Parent %s:', $item)),
-            'new_item_name' => __(sprintf('New %s', $item)),
-            'add_new_item' => __(sprintf('Add %s', $item)),
-            'edit_item' => __(sprintf('Edit %s', $item)),
-            'update_item' => __(sprintf('Update %s', $item)),
-            'view_item' => __(sprintf('View %s', $item)),
-            'separate_items_with_commas' => __(sprintf('Separate %s with commas', strtolower($plural))),
-            'add_or_remove_items' => __(sprintf('Add or remove %s', strtolower($plural))),
-            'choose_from_most_used' => __('Choose from the most used'),
-            'popular_items' => __(sprintf('Popular %s', $plural)),
-            'search_items' => __(sprintf('Search %s', $plural)),
-            'not_found' => __('Not Found'),
-        ), $labels);
-
-        $args = array_merge(array(
-            'labels' => $labels,
-            'hierarchical' => true,
-            'public' => true,
-            'show_ui' => true,
-            'show_admin_column' => true,
-            'show_in_nav_menus' => true,
-            'show_tagcloud' => false,
-        ), $args);
-
-        \register_taxonomy($taxonomy_name, '', $args);
-        static::$taxonomy_name = $taxonomy_name;
+        return $this->getMetaDataBinding();
     }
 
-    /**
-     * Because TimberTerm defines the function name(), our magic
-     * __get() method never gets called when trying to use .title in a
-     * twig template. This is our work around:
-     *
-     * If the called class has a function getTitle defined, call that.
-     * Otherwise call TimberTerm::title()
-     *
-     * @return mixed    Category
-     */
-    public function title()
+    public function setId($tid)
     {
-        $called_class = get_called_class();
+        $this->getTaxonomy()->setId();
+    }
 
-        if (method_exists($called_class, 'getTitle')) {
-            return $called_class::getTitle();
-        } else {
-            return parent::title();
+    public function getName()
+    {
+        return $this->getTaxonomy()->getName();
+    }
+
+
+    protected function configure(Taxonomy $taxonomy) {
+        return $taxonomy;
+    }
+
+    public function addToRegistry($key, Registerable $registerable)
+    {
+        $this->registry[$key] = $registerable;
+    }
+
+    public function registerItemsInRegistry()
+    {
+        foreach($this->registry as $registerable) {
+            $registerable->register();
         }
+    }
+
+    private function generateTaxonomy()
+    {
+        $taxonomy = new Taxonomy();
+        $className = get_called_class();
+        preg_match('@\\\\([\w]+)$@', $className, $matches);
+        $taxonmyName = strtolower(preg_replace('/(?<=\\w)(?=[A-Z])/', "-$1", $matches[1]));
+        $taxonomy->setName($taxonmyName);
+        return $this->configure($taxonomy);
+    }
+
+
+    public function has($property, $value)
+    {
+        if ($value instanceof Registerable) {
+            $this->addToRegistry($property, $value);
+        }
+
+        if ($value instanceof DelegatesMetaDataBinding) {
+            $value->setMetaDataBinding($this);
+        }
+
+        $this->$property = $value;
+    }
+
+    public function register()
+    {
+        $this->getMetaDataBinding()->register();
+        $this->registerItemsInRegistry();
     }
 
     /**
      * Implentation of HasMetaData->getMetaValue
      *
-     * @param  string $key Key for the meta field
+     * @param  string $metaFieldKey Key for the meta field
      * @return string                Value of the meta field
      */
     public function getMetaValue($key)
     {
-        return \get_post_meta($this->ID, $key, true);
+        return $this->getMetaDataBinding()->getMetaValue($key);
     }
 
     /**
@@ -116,6 +97,25 @@ abstract class CustomTaxonomy extends \TimberTerm implements HasMetaData
      */
     public function setMetaValue($key, $value)
     {
-        \update_post_meta($this->ID, $key, true);
+        $this->getMetaDataBinding()->setMetaValue($key, $value);
+    }
+
+    /**
+     * @return Taxonomy
+     */
+    public function getMetaDataBinding()
+    {
+        if(!isset($this->taxonomy)) {
+            $this->setMetaDataBinding($this->generateTaxonomy());
+        }
+
+        return $this->taxonomy;
+    }
+
+    public function setMetaDataBinding(MetaDataBinding $binding)
+    {
+        if (!$binding instanceof CustomPostType) {
+            $this->taxonomy = $binding;
+        }
     }
 }
