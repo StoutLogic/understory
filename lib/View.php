@@ -61,6 +61,11 @@ abstract class View implements DelegatesMetaDataBinding, Registerable, Registry,
     {
     }
 
+    protected function configureContext($context)
+    {
+        return $context;
+    }
+
     /**
      * @param string $key
      * @param Registerable $registerable
@@ -112,7 +117,9 @@ abstract class View implements DelegatesMetaDataBinding, Registerable, Registry,
 
         $this->setContext($property, $value);
 
-        $this->$property = $value;
+        if (!is_callable($value)) {
+            $this->$property = $value;
+        }
     }
 
     /**
@@ -255,7 +262,15 @@ abstract class View implements DelegatesMetaDataBinding, Registerable, Registry,
     {
         $this->context = Timber\Timber::get_context();
 
+        $this->context['page'] = $this->context['post'] = $this;
+
+        $this->context = $this->configureContext($this->context);
+
         foreach ($this->contextRegistry as $key => $value) {
+
+            if (is_callable($value)) {
+                $value = call_user_func($value);
+            }
             $this->context[$key] = $value;
         }
 
@@ -291,6 +306,11 @@ abstract class View implements DelegatesMetaDataBinding, Registerable, Registry,
     public function setMetaValue($key, $value)
     {
         $this->getMetaDataBinding()->setMetaValue($key, $value);
+    }
+
+    public function getBindingName()
+    {
+        return $this->getTemplate();
     }
 
     /**
