@@ -19,4 +19,10 @@ interface MetaDataBinding
      * @param  string $metaFieldValue Value for the meta field
      */
     public function setMetaValue($metaFieldKey, $metaFieldValue);
+
+    /**
+     * Return the name of this binding. Could be the post type name, user, taxonomy name
+     * @return string
+     */
+    public function getBindingName();
 }
