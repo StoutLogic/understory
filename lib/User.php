@@ -2,7 +2,7 @@
 
 namespace Understory;
 
-class User extends \TimberUser implements MetaDataBinding
+class User extends \Timber\User implements MetaDataBinding
 {
     public function isLoggedIn()
     {
@@ -16,8 +16,8 @@ class User extends \TimberUser implements MetaDataBinding
     /**
      * Implentation of MetaDataBinding::getMetaValue
      *
-     * @param  string $metaFieldKey Key for the meta field
-     * @return string                Value of the meta field
+     * @param  string $key Key for the meta field
+     * @return string Value of the meta field
      */
     public function getMetaValue($key)
     {
@@ -33,5 +33,10 @@ class User extends \TimberUser implements MetaDataBinding
     public function setMetaValue($key, $value)
     {
         \update_user_meta($this->ID, $key, $value);
+    }
+
+    public function getBindingName()
+    {
+        return 'user';
     }
 }
