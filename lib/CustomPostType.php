@@ -27,7 +27,7 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
      */
     public function setPost($post)
     {
-        $this->setMetaDataBinding(new PostType($post));
+        $this->getMetaDataBinding()->setPost($post);
     }
 
     protected function configure(PostType $postType)
@@ -55,9 +55,9 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
     {
         $postType = new PostType();
         $className = get_called_class();
-        preg_match('@\\\\([\w]+)$@', $className, $matches);
+        preg_match('@(\\\\)?([\w]+)$@', $className, $matches);
         $cptName = strtolower(
-            preg_replace('/(?<=\\w)(?=[A-Z])/', "-$1", $matches[1])
+            preg_replace('/(?<=\\w)(?=[A-Z])/', "-$1", $matches[2])
         );
         $postType->setPostType($cptName);
         $postType->getConfig();
@@ -71,6 +71,10 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
 
     public function has($property, $value)
     {
+        if ($value instanceof Sequential) {
+            $value->setSequentialPosition($this->getNextInSequence(), $this);
+        }
+
         if ($value instanceof Registerable) {
             $this->addToRegistry($property, $value);
         }
@@ -82,6 +86,13 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
         $this->$property = $value;
     }
 
+    private $sequence = 1;
+    private function getNextInSequence()
+    {
+        return $this->sequence++;
+    }
+
+
     public function register()
     {
         $this->getMetaDataBinding()->register();
@@ -91,11 +102,12 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
     /**
      * Registers a Taxonomy for this PostType with WordPress
      * @param CustomTaxonomy $taxonomy
+     * @return bool
      */
     public function registerTaxonomy(CustomTaxonomy $taxonomy)
     {
-        register_taxonomy_for_object_type(
-            $taxonomy->getName(),
+        return register_taxonomy_for_object_type(
+            $taxonomy->getTaxonomy(),
             $this->getPostType()
         );
     }
@@ -122,6 +134,11 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
         $this->getMetaDataBinding()->setMetaValue($key, $value);
     }
 
+    public function getBindingName()
+    {
+        return $this->getMetaDataBinding()->getBindingName();
+    }
+
     /**
      * @return PostType [description]
      */
@@ -137,5 +154,30 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
     public function setMetaDataBinding(MetaDataBinding $binding)
     {
         $this->post = $binding;
+    }
+
+    public function __isset($propertyName)
+    {
+        return isset($this->getMetaDataBinding()->$propertyName);
+    }
+
+    public function __get($propertyName)
+    {
+        if (method_exists($this, 'get'.$propertyName)) {
+            return call_user_func_array([$this, 'get'.$propertyName], []);
+        } else if (property_exists($this->getMetaDataBinding(), $propertyName)) {
+            return $this->getMetaDataBinding()->$propertyName;
+        }
+    }
+
+    public function __call($methodName, $args = [])
+    {
+        return call_user_func_array(
+            [
+                $this->getMetaDataBinding(),
+                $methodName,
+            ],
+            $args
+        );
     }
 }

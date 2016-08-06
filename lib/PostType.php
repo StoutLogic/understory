@@ -2,10 +2,14 @@
 
 namespace Understory;
 
-class PostType extends \Timber\Post implements MetaDataBinding, Registerable
+use Timber;
+
+class PostType extends Timber\Post implements MetaDataBinding, Registerable
 {
     // use Core;
     private $postType;
+
+    private $revisionLimit = 10;
 
     private $config = [];
 
@@ -18,7 +22,8 @@ class PostType extends \Timber\Post implements MetaDataBinding, Registerable
     public function __construct($post = null)
     {
         if ($post) {
-            $this->setPost($post);
+            $this->initConfig();
+            parent::__construct($post);
         }
     }
 
@@ -29,10 +34,13 @@ class PostType extends \Timber\Post implements MetaDataBinding, Registerable
      */
     public function setPost($post = null)
     {
-        if (!is_object($post)) {
-            $post = $this->determine_id($post);
-        }
-        $this->init($post);
+        $this->initConfig();
+        parent::__construct($post);
+    }
+
+    private function initConfig()
+    {
+        $this->config = $this->getDefaultConfiguration();
     }
 
     public function load()
@@ -58,6 +66,11 @@ class PostType extends \Timber\Post implements MetaDataBinding, Registerable
     public function getPostType()
     {
         return $this->postType;
+    }
+
+    public function getBindingName()
+    {
+        return $this->getPostType();
     }
 
     public function setConfig($key, $value)
@@ -114,7 +127,7 @@ class PostType extends \Timber\Post implements MetaDataBinding, Registerable
     public function getConfig($key = null)
     {
         if (empty($this->config)) {
-            $this->config = $this->getDefaultConfiguration();
+            $this->initConfig();
         }
         if ($key) {
             if (array_key_exists($key, $this->config)) {
@@ -132,9 +145,28 @@ class PostType extends \Timber\Post implements MetaDataBinding, Registerable
         return $this->setConfig('labels', $labels);
     }
 
+    public function getRevisionLimit()
+    {
+        return $this->revisionLimit;
+    }
+
+    public function setRevisionLimit($revisionLimit)
+    {
+        $this->revisionLimit = $revisionLimit;
+        return $this;
+    }
+
     public function register()
     {
-        register_post_type($this->getPostType(), $this->getConfig());
+        if ($this->getPostType() !== 'page') {
+            register_post_type($this->getPostType(), $this->getConfig());
+        }
+        add_filter( 'wp_revisions_to_keep', function($num, $post) {
+            if ($post->post_type === $this->getBindingName()) {
+                return $this->getRevisionLimit();
+            }
+            return $num;
+        }, 10, 2 );
     }
 
     private function getDefaultConfiguration()
@@ -166,7 +198,7 @@ class PostType extends \Timber\Post implements MetaDataBinding, Registerable
             'hierarchical' => false,
             'has_archive' => false,
             'menu_position' => null,
-            'supports' => ['title', 'editor', 'thumbnail'],
+            'supports' => ['title', 'editor', 'thumbnail', 'revisions'],
             'rewrite' => true,
             'show_in_nav_menus' => true,
         ];
@@ -175,111 +207,10 @@ class PostType extends \Timber\Post implements MetaDataBinding, Registerable
     }
 
     /**
-     * Register this post type with an already created Taxonomy
-     * Hook this function into the 'init' action.
-     *
-     * @param  string $taxonomy_name Taxonomy name
-     * @return -
-     */
-    public static function registerTaxonomy($taxonomyClass)
-    {
-        $called_class = get_called_class();
-
-        static::$taxonomies[$taxonomyClass::$taxonomy_name] = $taxonomyClass;
-        \register_taxonomy_for_object_type($taxonomyClass::$taxonomy_name, $called_class::$cpt_name);
-    }
-
-    /**
-     * Allows this post type to be sortable by Advance Custom Post Type Order
-     * @param  array $post_type_array allowed post types
-     * @return array                  allowed post types
-     */
-    public static function apoSortable($post_type_array)
-    {
-        $post_type_array[] = self::$cpt_name;
-        return $post_type_array;
-    }
-
-    public static function findRecent($limit = -1, $offset = 0, $args = array())
-    {
-        return self::findAll($limit, $offset, $args);
-    }
-
-    public static function findAll($limit = -1, $offset = 0, $args = array())
-    {
-        $called_class = get_called_class();
-
-        $args = array_merge(array(
-            'post_type' => array_keys($called_class::$post_types),
-            'posts_per_page' => $limit,
-            'offset' => $offset,
-        ), $args);
-
-        $results =  \Timber::get_posts($args, $called_class::$post_types, true);
-        return $results;
-    }
-
-    /**
-     * Find posts by id
-     *
-     * @param  mixed $id a single or array of ids
-     * @return array     Array of Posts
-     */
-    public static function find($id)
-    {
-        if (!is_array($id)) {
-            $id = array($id);
-        }
-
-        return self::findRecent(-1, 0, array(
-            'post__in' => $id
-        ));
-    }
-
-    /**
-     * Find post by slug
-     *
-     * @param  string $slug  slug of post
-     * @return post
-     */
-    public static function findBySlug($slug)
-    {
-        $called_class = get_called_class();
-
-        $args = array(
-            'post_type' => array_keys($called_class::$post_types),
-            'name' => $slug,
-        );
-
-        return \Timber::get_post($args, $called_class::$post_types);
-    }
-
-    /**
-     * Because TimberPost defines the function category(), our magic
-     * __get() method never gets called when trying to use .category in a
-     * twig template. This is our work around:
-     *
-     * If the called class has a function getCategory defined, call that.
-     * Otherwise call TimberPost::category()
-     *
-     * @return mixed    Category
-     */
-    public function category()
-    {
-        $called_class = get_called_class();
-
-        if (method_exists($called_class, 'getCategory')) {
-            return $called_class::getCategory();
-        } else {
-            return parent::category();
-        }
-    }
-
-    /**
      * Implentation of MetaDataBinding::getMetaValue
      *
-     * @param  string $metaFieldKey Key for the meta field
-     * @return string                Value of the meta field
+     * @param  string $key Key for the meta field
+     * @return string Value of the meta field
      */
     public function getMetaValue($key)
     {
