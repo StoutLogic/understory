@@ -4,43 +4,57 @@ namespace Understory;
 
 use Timber;
 
-abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable, Registry, Composition, Sequential
+abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable, Registry, Composition, Sequential, BelongsToPost
 {
     private $taxonomy;
     private $registry = [];
+    private $config;
 
-    public $core;
-
-    function __construct($tid = null, $tax = '')
+    public function __construct($tid = null)
     {
         if ($tid) {
-            $this->setId($tid);
+            $this->setTerm($tid);
         }
     }
 
-    public function getTaxonomy()
+    public function setTerm($tid = null)
     {
-        return $this->getMetaDataBinding()->getTaxonomy();
-    }
-
-    public function setId($tid)
-    {
-        $this->getMetaDataBinding()->setId($tid);
+        $this->setMetaDataBinding(new Term($tid, $this->getTaxonomy()));
+        $this->getConfig();
     }
 
     public function autobind()
     {
-        $this->getMetaDataBinding()->autobind();
+        $this->setTerm();
         return $this;
     }
 
-    public function getName()
+    public function getTaxonomy()
     {
-        return $this->getMetaDataBinding()->getName();
+        return $this->getConfig()->getTaxonomyName();
     }
 
-    protected function configure(Taxonomy $taxonomy) {
-        return $taxonomy;
+
+    protected function configure(TaxonomyBuilder $taxonomyBuilder) {
+        return $taxonomyBuilder;
+    }
+
+    public function getConfig()
+    {
+        if (!$this->config) {
+            $this->config = $this->generateBuilder();
+        }
+
+        return $this->config;
+    }
+
+    private function generateBuilder()
+    {
+        preg_match('@\\\\([\w]+)$@',get_called_class(), $matches);
+        $taxonomyName = strtolower(
+            preg_replace('/(?<=\\w)(?=[A-Z])/', "-$1", $matches[1])
+        );
+        return $this->configure(new TaxonomyBuilder($taxonomyName));
     }
 
     public function addToRegistry($key, Registerable $registerable)
@@ -53,16 +67,6 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
         foreach($this->registry as $registerable) {
             $registerable->register();
         }
-    }
-
-    private function generateTaxonomy()
-    {
-        $taxonomy = new Taxonomy();
-        $className = get_called_class();
-        preg_match('@\\\\([\w]+)$@', $className, $matches);
-        $taxonomyName = strtolower(preg_replace('/(?<=\\w)(?=[A-Z])/', "-$1", $matches[1]));
-        $taxonomy->setTaxonomy($taxonomyName);
-        return $this->configure($taxonomy);
     }
 
     public function has($property, $value)
@@ -96,14 +100,14 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
     /**
      * Sets the Taxonomy Meta Box Order.
      * @param $position
-     * @param MetaDataBinding $metaDataBinding
+     * @param MetaDataBinding $context
      */
-    public function setSequentialPosition($position, MetaDataBinding $metaDataBinding)
+    public function setSequentialPosition($position, MetaDataBinding $context)
     {
-        add_action('do_meta_boxes', function($post_type) use ($position, $metaDataBinding){
+        add_action('do_meta_boxes', function($post_type) use ($position, $context){
             global $wp_meta_boxes;
 
-            if ($metaDataBinding->getBindingName() !== $post_type) {
+            if ($context->getBindingName() !== $post_type) {
                 return;
             }
 
@@ -115,14 +119,16 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
 
                 if (
                     is_array($metaBox)
-                    && array_key_exists('args', $metaBox)
+                    && isset($metaBox['args'])
                     && is_array($metaBox['args'])
-                    && array_key_exists('taxonomy', $metaBox['args'])
+                    && isset($metaBox['args']['taxonomy'])
                     && $metaBox['args']['taxonomy'] === $this->getBindingName()
                 ) {
                     $wp_meta_boxes[$post_type]['side']['core']['understory-taxonomy'.$position] = $metaBox;
                     unset($wp_meta_boxes[$post_type]['side']['core'][$key]);
+
                 }
+
             }
         }, 10000, 1);
     }
@@ -130,7 +136,11 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
 
     public function register()
     {
-        $this->getMetaDataBinding()->register();
+        register_taxonomy(
+            $this->getConfig()->getTaxonomyName(),
+            '',
+            $this->getConfig()->build()
+        );
         $this->registerItemsInRegistry();
     }
 
@@ -158,11 +168,11 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
 
     public function getBindingName()
     {
-        return $this->getMetaDataBinding()->getBindingName();
+        return $this->getTaxonomy();
     }
 
     /**
-     * @return Taxonomy
+     * @return Term
      */
     public function getMetaDataBinding()
     {
@@ -180,15 +190,31 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
         }
     }
 
+    public function belongsToPost(CustomPostType $post, $many = false)
+    {
+        return function () use (&$post, $many) {
+            $terms = $post->terms($this->getTaxonomy(), true, get_class($this));
+
+            if ($many) {
+                return $terms;
+            }
+
+            if (count($terms) > 0) {
+                return $terms[0];
+            }
+
+            return null;
+        };
+    }
+
     public function findAll($args = [])
     {
         $args = array_merge([
             'posts_per_page' => '-1',
-            'taxonomy' => $this->getBindingName()
+            'taxonomy' => $this->getTaxonomy(),
         ], $args);
 
-        $called_class = get_called_class();
-        return Timber\TermGetter::get_terms($args, $called_class);
+        return Timber\TermGetter::get_terms($args, get_called_class());
     }
 
     public function findAllTopLevel($args = [])
@@ -200,28 +226,38 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
         return $this->findAll($args);
     }
 
-    public function __isset($propertyName)
+    public function __isset($property)
     {
-        return isset($this->getMetaDataBinding()->$propertyName);
+        return isset($this->getMetaDataBinding()->$property);
     }
 
-    public function __get($propertyName)
+    public function __get($property)
     {
-        if (method_exists($this, 'get'.$propertyName)) {
-            return call_user_func_array([$this, 'get'.$propertyName], []);
-        } else if (property_exists($this->getMetaDataBinding(), $propertyName)) {
-            return $this->getMetaDataBinding()->$propertyName;
+        if (method_exists($this, 'get'.$property)) {
+            return call_user_func_array([$this, 'get'.$property], []);
         }
+
+        return $this->getMetaDataBinding()->$property;
     }
 
-    public function __call($methodName, $args = [])
+    public function __call($method, $args)
     {
         return call_user_func_array(
             [
                 $this->getMetaDataBinding(),
-                $methodName,
+                $method,
             ],
             $args
         );
+    }
+
+    public static function from($tid, $taxonomy)
+    {
+        return new static($tid);
+    }
+
+    public function __toString()
+    {
+        return $this->getTaxonomy();
     }
 }
