@@ -130,7 +130,7 @@ abstract class View implements DelegatesMetaDataBinding, Registerable, Registry,
     protected function initializeBindings()
     {
         if (!$this->getMetaDataBinding()) {
-            $post = new PostType;
+            $post = new Post;
             $post->load();
             $this->setMetaDataBinding($post);
         }

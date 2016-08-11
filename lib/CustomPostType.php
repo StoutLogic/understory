@@ -2,10 +2,14 @@
 
 namespace Understory;
 
+use Timber;
+
 abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable, Registry, Composition
 {
     private $post;
     private $registry = [];
+    private $config;
+    private $closureProp = [];
 
     /**
      * If we are supplied a post then we try to instantiate as the correct
@@ -25,14 +29,44 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
      * If nothing is passed, WordPress's current post will try to be determined
      * @param mixed $post Post, Post ID or null
      */
-    public function setPost($post)
+    public function setPost($post = null)
     {
-        $this->getMetaDataBinding()->setPost($post);
+        $this->setMetaDataBinding(new Post($post));
+        $this->getConfig();
     }
 
-    protected function configure(PostType $postType)
+    public function autobind()
     {
-        return $postType;
+        $this->setPost();
+        return $this;
+    }
+
+    public function getPostType()
+    {
+        return $this->getConfig()->getPostTypeName();
+    }
+
+    protected function configure(PostTypeBuilder $postTypeBuilder)
+    {
+        return $postTypeBuilder;
+    }
+
+    public function getConfig()
+    {
+        if (!$this->config) {
+            $this->config = $this->generateBuilder();
+        }
+
+        return $this->config;
+    }
+
+    private function generateBuilder()
+    {
+        preg_match('@(\\\\)?([\w]+)$@', get_called_class(), $matches);
+        $cptName = strtolower(
+            preg_replace('/(?<=\\w)(?=[A-Z])/', "-$1", $matches[2])
+        );
+        return $this->configure(new PostTypeBuilder($cptName));
     }
 
     public function addToRegistry($key, Registerable $registerable)
@@ -51,25 +85,7 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
         }
     }
 
-    private function generatePostType()
-    {
-        $postType = new PostType();
-        $className = get_called_class();
-        preg_match('@(\\\\)?([\w]+)$@', $className, $matches);
-        $cptName = strtolower(
-            preg_replace('/(?<=\\w)(?=[A-Z])/', "-$1", $matches[2])
-        );
-        $postType->setPostType($cptName);
-        $postType->getConfig();
-        return $this->configure($postType);
-    }
-
-    public function getPostType()
-    {
-        return $this->getMetaDataBinding()->getPostType();
-    }
-
-    public function has($property, $value)
+    public function has($property, $value, $many = false)
     {
         if ($value instanceof Sequential) {
             $value->setSequentialPosition($this->getNextInSequence(), $this);
@@ -83,7 +99,46 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
             $value->setMetaDataBinding($this);
         }
 
-        $this->$property = $value;
+        if ($value instanceof BelongsToPost) {
+            $this->setClosureProperty($property, $value->belongsToPost($this, $many));
+        }
+
+        $this->setProperty($property, $value);
+    }
+
+    public function hasMany($property, $value)
+    {
+        $this->has($property, $value, $many = true);
+    }
+
+    public function hasOne($property, $value)
+    {
+        $this->has($property, $value);
+    }
+
+    /**
+     * @param string $property
+     * @param mixed $value
+     */
+    private function setProperty($property, $value)
+    {
+        $reflection = new \ReflectionObject($this);
+        if (
+            !isset($this->closureProp[$property])
+            && (
+                !$reflection->hasProperty($property)
+                || !$reflection->getProperty($property)->isPrivate()
+            )
+        ){
+            $this->$property = $value;
+        }
+    }
+
+    private function setClosureProperty($property, $value)
+    {
+        if ($value instanceof \Closure) {
+            $this->closureProp[$property] = $value;
+        }
     }
 
     private $sequence = 1;
@@ -92,11 +147,27 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
         return $this->sequence++;
     }
 
-
     public function register()
     {
-        $this->getMetaDataBinding()->register();
+        // Don't register if the post type is a page, no need.
+        if ($this->getPostType() !== 'page') {
+            register_post_type(
+                $this->getPostType(),
+                $this->getConfig()->build()
+            );
+        }
+        $this->registerRevisionLimit();
         $this->registerItemsInRegistry();
+    }
+
+    private function registerRevisionLimit()
+    {
+        add_filter('wp_revisions_to_keep', function($num, $post) {
+            if ($post->post_type === $this->getPostType()) {
+                return $this->getConfig()->getRevisionLimit();
+            }
+            return $num;
+        }, 10, 2 );
     }
 
     /**
@@ -136,16 +207,16 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
 
     public function getBindingName()
     {
-        return $this->getMetaDataBinding()->getBindingName();
+        return $this->getPostType();
     }
 
     /**
-     * @return PostType [description]
+     * @return Post [description]
      */
     public function getMetaDataBinding()
     {
         if (!isset($this->post)) {
-            $this->setMetaDataBinding($this->generatePostType());
+            $this->autobind();
         }
 
         return $this->post;
@@ -156,28 +227,62 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
         $this->post = $binding;
     }
 
-    public function __isset($propertyName)
+    public function findAll($args = [])
     {
-        return isset($this->getMetaDataBinding()->$propertyName);
+        $args = array_merge([
+            'posts_per_page' => '-1',
+            'post_type' => $this->getPostType()
+        ], $args);
+
+        return Timber\PostGetter::get_posts($args, get_called_class());
     }
 
-    public function __get($propertyName)
+    public function __isset($property)
     {
-        if (method_exists($this, 'get'.$propertyName)) {
-            return call_user_func_array([$this, 'get'.$propertyName], []);
-        } else if (property_exists($this->getMetaDataBinding(), $propertyName)) {
-            return $this->getMetaDataBinding()->$propertyName;
+        if (isset($this->closureProp[$property])) {
+            return true;
         }
+        return isset($this->getMetaDataBinding()->$property);
     }
 
-    public function __call($methodName, $args = [])
+    public function __get($property)
     {
+        if ($this->hasClosureProp($property)) {
+            return $this->getClosureProp($property);
+        }
+
+        if (method_exists($this, 'get'.$property)) {
+            return call_user_func_array([$this, 'get'.$property], []);
+        }
+
+        return $this->getMetaDataBinding()->$property;
+    }
+
+    public function __call($method, $args)
+    {
+        if ($this->hasClosureProp($method)) {
+            return $this->getClosureProp($method);
+        }
+
         return call_user_func_array(
             [
                 $this->getMetaDataBinding(),
-                $methodName,
+                $method,
             ],
             $args
         );
+    }
+
+    private function hasClosureProp($property)
+    {
+        return isset($this->closureProp[$property]);
+    }
+
+    private function getClosureProp($property)
+    {
+        if ($this->hasClosureProp($property)) {
+            $closure = $this->closureProp[$property];
+            return $closure();
+        }
     }
 }
