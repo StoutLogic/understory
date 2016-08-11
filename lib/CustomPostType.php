@@ -149,15 +149,29 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
 
     public function register()
     {
-        // Don't register if the post type is a page, no need.
-        if ($this->getPostType() !== 'page') {
+        if (!$this->modifyRegisteredPostType()) {
             register_post_type(
                 $this->getPostType(),
                 $this->getConfig()->build()
             );
         }
+
         $this->registerRevisionLimit();
         $this->registerItemsInRegistry();
+    }
+
+    private function modifyRegisteredPostType()
+    {
+        global $wp_post_types;
+
+        if (isset($wp_post_types[$this->getPostType()])) {
+            // Convert associative arrays to a stdobject 1 level deep
+            $config = json_decode(json_encode($this->getConfig()->build()), false);
+            $wp_post_types[$this->getPostType()] = $config;
+            return true;
+        }
+
+        return false;
     }
 
     private function registerRevisionLimit()

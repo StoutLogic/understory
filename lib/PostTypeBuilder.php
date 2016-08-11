@@ -2,6 +2,8 @@
 
 namespace Understory;
 
+use Doctrine\Common\Inflector\Inflector;
+
 class PostTypeBuilder implements Builder
 {
     private $config = [];
@@ -43,6 +45,11 @@ class PostTypeBuilder implements Builder
         return $this->setConfig('labels', $labels);
     }
 
+    public function setLabel($key, $value)
+    {
+        return $this->setLabelConfig($key, $value);
+    }
+
     public function setRewriteConfig($key, $value)
     {
         $rewrite = $this->getConfig('rewrite');
@@ -53,14 +60,15 @@ class PostTypeBuilder implements Builder
         return $this->setConfig('rewrite', $rewrite);
     }
 
-    public function setLabelName($name)
+    public function setLabelName($singular, $plural = null)
     {
-        return $this->setLabelConfig('singular_name', $name);
-    }
-
-    public function setLabelPlural($plural)
-    {
-        return $this->setLabelConfig('name', $plural);
+        return $this->setConfig(
+            'labels',
+            array_merge(
+                $this->getConfig('labels'),
+                $this->generateLabels($singular, $plural)
+            )
+        );
     }
 
     public function setSlug($slug)
@@ -71,6 +79,17 @@ class PostTypeBuilder implements Builder
     public function setSupports($supports)
     {
         return $this->setConfig('supports', $supports);
+    }
+
+    public function removeSupport($support)
+    {
+        $supports = $this->getConfig('supports') ?: [];
+        $index = array_search($support, $supports);
+        if ($index !== false) {
+            array_splice($supports, $index, 1);
+        }
+
+        return $this->setSupports($supports);
     }
 
     public function setMenuIcon($icon)
@@ -126,25 +145,60 @@ class PostTypeBuilder implements Builder
 
     private function getDefaultConfiguration()
     {
-        $item = ucwords($this->getPostTypeName());
-        $plural = $item.'s';
+        global $wp_post_types;
 
-        $labels = [
+        // Is the post type already registered, i.e. a default post type?
+        if (isset($wp_post_types[$this->getPostTypeName()])) {
+            $config = [];
+            // Convert any stdobjects to an array to manipulate
+            foreach ($wp_post_types[$this->getPostTypeName()] as $key => $value) {
+                $config[$key] = $value;
+                if (is_object($value)) {
+                    $config[$key] = (array) $value;
+                }
+            }
+            return $config;
+        }
+
+        return $this->generateDefaultConfiguration();
+    }
+
+    private function generateLabels($singular, $plural = null)
+    {
+        if (!$plural) {
+            $plural = Inflector::pluralize($singular);
+        }
+
+        return [
             'name' => sprintf('%s', $plural),
-            'singular_name' => sprintf('%s', $item),
-            'add_new' => 'Add New', sprintf('%s', $item),
-            'add_new_item' => sprintf('Add New %s', $item),
-            'edit_item' => sprintf('Edit %s', $item),
-            'new_item' => sprintf('New %s', $item),
-            'view_item' => sprintf('View %s', $item),
+            'singular_name' => sprintf('%s', $singular),
+            'add_new' => 'Add New', sprintf('%s', $singular),
+            'add_new_item' => sprintf('Add New %s', $singular),
+            'edit_item' => sprintf('Edit %s', $singular),
+            'new_item' => sprintf('New %s', $singular),
+            'view_item' => sprintf('View %s', $singular),
             'search_items' => sprintf('Search %s', $plural),
-            'not_found' => 'Nothing found',
-            'not_found_in_trash' => 'Nothing found in Trash',
-            'parent_item_colon' => ''
+            'not_found' =>  sprintf('No %s found', strtolower($plural)),
+            'not_found_in_trash' =>  sprintf('No %s found in trash', strtolower($plural)),
+            'parent_item_colon' => sprintf('Parent %s:', $singular),
+            'all_items' => sprintf('All %s', $plural),
+            'archives' => sprintf('%s Archives', $singular),
+            'insert_into_item' => sprintf('Insert into %s:', strtolower($singular)),
+            'uploaded_to_this_item' => sprintf('Upload to this %s', strtolower($singular)),
+            'filter_items_list' => sprintf('Filter %s list', strtolower($plural)),
+            'items_list_navigation' => sprintf('%s list navigation ', $plural),
+            'items_list' => sprintf('%s List', $plural),
+            'menu_name' => $plural,
+            'name_admin_bar' => $singular,
         ];
+    }
+
+    private function generateDefaultConfiguration()
+    {
+        $item = ucwords($this->getPostTypeName());
 
         $args = [
-            'labels' => $labels,
+            'labels' => $this->generateLabels($item),
             'public' => true,
             'publicly_queryable' => true,
             'show_ui' => true,
