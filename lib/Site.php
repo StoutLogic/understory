@@ -291,4 +291,26 @@ class Site extends \Timber\Site
         $twig->addFilter('svg', new \Twig_Filter_Function(array( 'Understory\\Helpers\\Svg', 'embed')));
         return $twig;
     }
+
+    /**
+     * Wraps Timber::get_posts($query) and intitialzes the each post as the correct
+     * CustomPostType class.
+     * @param mixed $query
+     * @return array
+     */
+    public static function getPosts($query = false)
+    {
+        $reflection = new \ReflectionClass(get_called_class());
+        $namespace = $reflection->getNamespaceName().'\\Models\\';
+
+        return array_map(function($post) use ($namespace){
+            $className = $namespace.$post->post_type;
+
+            if (class_exists($className)) {
+                return new $className($post);
+            }
+
+            return $post;
+        }, Timber::get_posts($query));
+    }
 }
