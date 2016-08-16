@@ -117,14 +117,6 @@ class Site extends \Timber\Site
         return $file;
     }
 
-    private function getSiteNameSpace()
-    {
-        $called_class = get_called_class();
-        $reflection = new \ReflectionClass($called_class);
-
-        return $reflection->getNamespaceName();
-    }
-
     /**
      * Register the post types in app/models automatically
      */
@@ -133,7 +125,7 @@ class Site extends \Timber\Site
         $modelFiles = $this->getFiles('app/Models');
 
         foreach ($modelFiles as $modelFile) {
-            $modelClass = $this->getSiteNameSpace().'\\Models\\'.$this->fileToClass($modelFile);
+            $modelClass = static::getSiteNamespace().'\\Models\\'.$this->fileToClass($modelFile);
 
             if (new $modelClass instanceof CustomPostType) {
                 $this->registerPostType($modelClass);
@@ -163,7 +155,7 @@ class Site extends \Timber\Site
             // Make sure the viewFile is a class
 
             if ($this->isUnderStoryView($viewFile)) {
-                $viewClass = $this->getSiteNameSpace().'\\Views\\'.$this->fileToClass($viewFile);
+                $viewClass = static::getSiteNamespace().'\\Views\\'.$this->fileToClass($viewFile);
                 $this->registerView($viewClass);
             }
         }
@@ -174,7 +166,7 @@ class Site extends \Timber\Site
         $taxonomyFiles = $this->getFiles('app/Taxonomies');
 
         foreach ($taxonomyFiles as $taxonomyFile) {
-            $taxonomyClass = $this->getSiteNameSpace().'\\Taxonomies\\'.$this->fileToClass($taxonomyFile);
+            $taxonomyClass = static::getSiteNamespace().'\\Taxonomies\\'.$this->fileToClass($taxonomyFile);
 
             if (new $taxonomyClass instanceof CustomTaxonomy) {
                 $this->registerTaxonomy($taxonomyClass);
@@ -205,11 +197,11 @@ class Site extends \Timber\Site
     public function registerView($viewClass)
     {
         // Append the full namespace to the classname if it doesn't exist
-        if (strpos($viewClass, $this->getSiteNameSpace()) === false) {
-            $viewClass = $this->getSiteNameSpace().$viewClass;
+        if (strpos($viewClass, static::getSiteNameSpace()) === false) {
+            $viewClass = static::getSiteNamespace().$viewClass;
         }
 
-        $view = new $viewClass();
+        $view = new $viewClass($this);
 
         // Index the viewClass by its file name, so we can render it
         // when WordPress tries to include that file
@@ -292,6 +284,29 @@ class Site extends \Timber\Site
         return $twig;
     }
 
+    public static function getSiteNamespace()
+    {
+        $reflection = new \ReflectionClass(get_called_class());
+        return $reflection->getNamespaceName();
+    }
+
+    public static function getPost($post = null)
+    {
+        if (!$post) {
+            $post = new Post();
+            $post->load();
+        }
+
+        $namespace = static::getSiteNamespace().'\\Models\\';
+        $className = $namespace.$post->post_type;
+
+        if (class_exists($className)) {
+            return new $className($post);
+        }
+
+        return $post;
+    }
+
     /**
      * Wraps Timber::get_posts($query) and intitialzes the each post as the correct
      * CustomPostType class.
@@ -300,8 +315,7 @@ class Site extends \Timber\Site
      */
     public static function getPosts($query = false)
     {
-        $reflection = new \ReflectionClass(get_called_class());
-        $namespace = $reflection->getNamespaceName().'\\Models\\';
+        $namespace = $namespace = static::getSiteNamespace().'\\Models\\';
 
         return array_map(function($post) use ($namespace){
             $className = $namespace.$post->post_type;

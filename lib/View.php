@@ -53,6 +53,14 @@ abstract class View implements DelegatesMetaDataBinding, Registerable, Registry,
      * @var array
      */
     private $contextRegistry = [];
+    private $site;
+
+    public function __construct(\Understory\Site $site)
+    {
+        $this->site = $site;
+    }
+
+
 
     /**
      * Override to configure the view
@@ -130,9 +138,8 @@ abstract class View implements DelegatesMetaDataBinding, Registerable, Registry,
     protected function initializeBindings()
     {
         if (!$this->getMetaDataBinding()) {
-            $post = new Post;
-            $post->load();
-            $this->setMetaDataBinding($post);
+            $siteClass = get_class($this->site);
+            $this->setMetaDataBinding($siteClass::getPost());
         }
         $this->bindRegistryItems();
     }
@@ -262,7 +269,8 @@ abstract class View implements DelegatesMetaDataBinding, Registerable, Registry,
     {
         $this->context = Timber\Timber::get_context();
 
-        $this->context['page'] = $this->context['post'] = $this;
+        $this->context['page'] = $this;
+        $this->context['post'] = $this->getMetaDataBinding();
 
         $this->context = $this->configureContext($this->context);
 
