@@ -297,6 +297,10 @@ class Site extends \Timber\Site
             $post->load();
         }
 
+        if (!$post->ID) {
+            return null;
+        }
+
         $namespace = static::getSiteNamespace().'\\Models\\';
         $className = $namespace.$post->post_type;
 

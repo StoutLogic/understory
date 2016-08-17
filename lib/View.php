@@ -139,7 +139,10 @@ abstract class View implements DelegatesMetaDataBinding, Registerable, Registry,
     {
         if (!$this->getMetaDataBinding()) {
             $siteClass = get_class($this->site);
-            $this->setMetaDataBinding($siteClass::getPost());
+            if ($binding = $siteClass::getPost()) {
+                $this->setMetaDataBinding($binding);
+            }
+
         }
         $this->bindRegistryItems();
     }
