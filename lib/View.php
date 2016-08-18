@@ -55,12 +55,23 @@ abstract class View implements DelegatesMetaDataBinding, Registerable, Registry,
     private $contextRegistry = [];
     private $site;
 
-    public function __construct(\Understory\Site $site)
+    public function __construct()
+    {
+
+    }
+
+    public function setSite(\Understory\Site $site)
     {
         $this->site = $site;
     }
 
-
+    /**
+     * @return \Understory\Site
+     */
+    public function getSite()
+    {
+        return $this->site;
+    }
 
     /**
      * Override to configure the view

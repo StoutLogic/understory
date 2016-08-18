@@ -201,7 +201,8 @@ class Site extends \Timber\Site
             $viewClass = static::getSiteNamespace().$viewClass;
         }
 
-        $view = new $viewClass($this);
+        $view = new $viewClass();
+        $view->setSite($this);
 
         // Index the viewClass by its file name, so we can render it
         // when WordPress tries to include that file
