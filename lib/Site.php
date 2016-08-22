@@ -2,6 +2,7 @@
 
 namespace Understory;
 
+use Doctrine\Common\Inflector\Inflector;
 use Understory\Config;
 use \Timber\Timber;
 
@@ -237,8 +238,8 @@ class Site extends \Timber\Site
     public function renderView($template)
     {
         if (array_key_exists($template, $this->views)) {
-            $this->views[$template]->render();
-            $template = "";
+            echo $this->views[$template]->render();
+            return false;
         }
 
         return $template;
@@ -266,7 +267,6 @@ class Site extends \Timber\Site
     {
         global $wp_query;
         if (empty($title)) {
-
             if ((is_home() || is_front_page())) {
                 return $this->name;
             } else {
@@ -303,7 +303,7 @@ class Site extends \Timber\Site
         }
 
         $namespace = static::getSiteNamespace().'\\Models\\';
-        $className = $namespace.$post->post_type;
+        $className = $namespace.Inflector::classify($post->post_type);
 
         if (class_exists($className)) {
             return new $className($post);
@@ -322,7 +322,7 @@ class Site extends \Timber\Site
     {
         $namespace = $namespace = static::getSiteNamespace().'\\Models\\';
 
-        return array_map(function($post) use ($namespace){
+        return array_map(function ($post) use ($namespace) {
             $className = $namespace.$post->post_type;
 
             if (class_exists($className)) {
