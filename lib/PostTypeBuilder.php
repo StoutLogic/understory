@@ -195,7 +195,7 @@ class PostTypeBuilder implements Builder
 
     private function generateDefaultConfiguration()
     {
-        $item = ucwords($this->getPostTypeName());
+        $item = ucwords(str_replace('-', ' ', $this->getPostTypeName()));
 
         $args = [
             'labels' => $this->generateLabels($item),
