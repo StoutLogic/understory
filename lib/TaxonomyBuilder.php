@@ -2,6 +2,8 @@
 
 namespace Understory;
 
+use Doctrine\Common\Inflector\Inflector;
+
 class TaxonomyBuilder implements Builder
 {
     private $config = [];
