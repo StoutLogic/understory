@@ -39,7 +39,7 @@ class TaxonomyBuilder implements Builder
     private function getDefaultConfiguration()
     {
         $item = ucwords(str_replace('-', ' ', $this->getTaxonomyName()));
-        $plural = $item . 's';
+        $plural = Inflector::pluralize($item);
 
         $labels = [
             'name' => sprintf('%s', $plural),
