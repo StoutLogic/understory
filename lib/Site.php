@@ -305,7 +305,7 @@ class Site extends \Timber\Site
         $namespace = static::getSiteNamespace().'\\Models\\';
         $className = $namespace.Inflector::classify($post->post_type);
 
-        if (class_exists($className)) {
+        if (class_exists($className, false)) {
             return new $className($post);
         }
 
