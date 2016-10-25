@@ -81,6 +81,14 @@ class PostTypeBuilder implements Builder
         return $this->setConfig('supports', $supports);
     }
 
+    public function addSupport($support)
+    {
+        $supports = $this->getConfig('supports') ?: [];
+        $supports[] = $support;
+
+        return $this->setSupports($supports);
+    }
+
     public function removeSupport($support)
     {
         $supports = $this->getConfig('supports') ?: [];
