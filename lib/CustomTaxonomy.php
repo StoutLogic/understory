@@ -207,6 +207,13 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
         };
     }
 
+    public function getChildren()
+    {
+        return array_map(function($child) {
+            return new static($child);
+        }, $this->getMetaDataBinding()->children());
+    }
+
     public function findAll($args = [])
     {
         $args = array_merge([
