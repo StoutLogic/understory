@@ -37,7 +37,6 @@ class Site extends \Timber\Site
         \add_action('admin_menu', array( $this, 'customizeAdminMenu' ), 10);
 
         \add_action('wp_enqueue_scripts', array( $this, 'enqueScripts'), 100);
-        \add_action('wp_enqueue_scripts', array( $this, 'enqueDefaultStylesheets'), 100000);
         \add_action('wp_enqueue_scripts', array( $this, 'enqueStylesheets'), 102);
         \add_action('admin_enqueue_scripts', array( $this, 'enqueAdminStylesheets'), 100);
 
@@ -74,11 +73,6 @@ class Site extends \Timber\Site
 
     public function enqueStylesheets()
     {
-    }
-
-    public function enqueDefaultStylesheets()
-    {
-        \wp_enqueue_style('site', \get_template_directory_uri().'/assets/dist/site.css');
     }
 
     public function enqueAdminStylesheets()
