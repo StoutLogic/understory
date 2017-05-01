@@ -275,7 +275,7 @@ class Site extends \Timber\Site
     {
         /* this is where you can add your own fuctions to twig */
         $twig->addExtension(new \Twig_Extension_StringLoader());
-        $twig->addFilter('svg', new \Twig_Filter_Function(array( 'Understory\\Helpers\\Svg', 'embed')));
+        $twig->addFilter('svg', new \Twig_SimpleFilter(array( 'Understory\\Helpers\\Svg', 'embed')));
         return $twig;
     }
 
