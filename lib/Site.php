@@ -271,9 +271,9 @@ class Site extends \Timber\Site
         return $title . ' | ' . $this->name;
     }
 
-    public function addToTwig($twig)
+    public function addToTwig(\Twig_Environment $twig)
     {
-        /* this is where you can add your own fuctions to twig */
+        /* this is where you can add your own functions to twig */
         $twig->addExtension(new \Twig_Extension_StringLoader());
         $twig->addFilter('svg', new \Twig_Filter_Function(array( 'Understory\\Helpers\\Svg', 'embed')));
         return $twig;
