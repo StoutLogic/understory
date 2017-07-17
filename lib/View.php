@@ -241,6 +241,11 @@ abstract class View implements DelegatesMetaDataBinding, Registerable, Registry,
         return $this->template;
     }
 
+    public function getTemplateFilePath()
+    {
+        return 'app/Views'.$this->getFileName().'.php';
+    }
+
     /**
      * Manually set the path of the template from the base 'templates' directory.
      * Set to empty string or don't set to autogenerate the template path
