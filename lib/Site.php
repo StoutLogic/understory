@@ -8,8 +8,8 @@ use \Timber\Timber;
 
 class Site extends \Timber\Site
 {
-    protected static $themeSupport = array();
-    protected $optionPages = array();
+    protected static $themeSupport = [];
+    protected $optionsPages = [];
     protected $editor;
 
     protected $views = array();
@@ -31,14 +31,14 @@ class Site extends \Timber\Site
         \add_action('init', array( $this, 'registerViews' ), 11);
         \add_action('init', array( $this, 'registerTaxonomies' ), 12);
         \add_action('init', array( $this, 'registerPostTypes' ), 13);
-        \add_action('init', array( $this, 'registerOptionPages' ), 14);
+        \add_action('init', array( $this, 'registerOptionsPages' ), 14);
         \add_action('init', array( $this, 'registerNavigations' ), 15);
 
         \add_action('admin_menu', array( $this, 'customizeAdminMenu' ), 10);
 
-        \add_action('wp_enqueue_scripts', array( $this, 'enqueScripts'), 100);
-        \add_action('wp_enqueue_scripts', array( $this, 'enqueStylesheets'), 102);
-        \add_action('admin_enqueue_scripts', array( $this, 'enqueAdminStylesheets'), 100);
+        \add_action('wp_enqueue_scripts', array( $this, 'enqueueScripts'), 100);
+        \add_action('wp_enqueue_scripts', array( $this, 'enqueueStylesheets'), 102);
+        \add_action('admin_enqueue_scripts', array( $this, 'enqueueAdminStylesheets'), 100);
 
         \add_filter('wp_title', array( $this, 'wpTitle' ));
 
@@ -71,15 +71,15 @@ class Site extends \Timber\Site
         }
     }
 
-    public function enqueStylesheets()
+    public function enqueueStylesheets()
     {
     }
 
-    public function enqueAdminStylesheets()
+    public function enqueueAdminStylesheets()
     {
     }
 
-    public function enqueScripts()
+    public function enqueueScripts()
     {
     }
 
@@ -99,7 +99,7 @@ class Site extends \Timber\Site
             return basename($file, '.php');
         }, array_filter($files, function ($file) {
             $fileInfo = pathinfo($file);
-            return $fileInfo['extension'] === 'php';
+            return array_key_exists('extension', $fileInfo) && $fileInfo['extension'] === 'php';
         }));
 
         return $files;
@@ -221,13 +221,13 @@ class Site extends \Timber\Site
      * Called by the WordPress include_template filter, so we can
      * intercept it and render our registered View object instead.
      *
-     * This is not a great solution becuase WordPress filters should not
+     * This is not a great solution because WordPress filters should not
      * cause side effects, but in this case, on render is the only time
      * this filter should be called. Still, we will acknowledge that
      * it is a hack
      *
      * @param  string $template template file
-     * @return string           tempalte file, return false if rendering
+     * @return string           template file, return false if rendering
      */
     public function renderView($template)
     {
