@@ -40,6 +40,26 @@ class TaxonomyBuilder implements Builder
 
     private function getDefaultConfiguration()
     {
+        global $wp_taxonomies;
+
+        // Is the post type already registered, i.e. a default post type?
+        if (isset($wp_taxonomies[$this->getTaxonomyName()])) {
+            $config = [];
+            // Convert any stdobjects to an array to manipulate
+            foreach ($wp_taxonomies[$this->getTaxonomyName()] as $key => $value) {
+                $config[$key] = $value;
+                if (is_object($value)) {
+                    $config[$key] = (array) $value;
+                }
+            }
+            return $config;
+        }
+
+        return $this->generateDefaultConfiguration();
+    }
+
+    private function generateDefaultConfiguration()
+    {
         $item = ucwords(str_replace('-', ' ', $this->getTaxonomyName()));
         $plural = Inflector::pluralize($item);
 

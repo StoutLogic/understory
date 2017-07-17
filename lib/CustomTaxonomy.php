@@ -35,7 +35,8 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
     }
 
 
-    protected function configure(TaxonomyBuilder $taxonomyBuilder) {
+    protected function configure(TaxonomyBuilder $taxonomyBuilder)
+    {
         return $taxonomyBuilder;
     }
 
@@ -50,7 +51,7 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
 
     private function generateBuilder()
     {
-        preg_match('@\\\\([\w]+)$@',get_called_class(), $matches);
+        preg_match('@\\\\([\w]+)$@', get_called_class(), $matches);
         $taxonomyName = strtolower(
             preg_replace('/(?<=\\w)(?=[A-Z])/', "-$1", $matches[1])
         );
@@ -64,7 +65,7 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
 
     public function registerItemsInRegistry()
     {
-        foreach($this->registry as $registerable) {
+        foreach ($this->registry as $registerable) {
             $registerable->register();
         }
     }
@@ -92,7 +93,7 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
         if (
             !$reflection->hasProperty($property)
             || !$reflection->getProperty($property)->isPrivate()
-        ){
+        ) {
             $this->$property = $value;
         }
     }
@@ -104,14 +105,14 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
      */
     public function setSequentialPosition($position, MetaDataBinding $context)
     {
-        add_action('do_meta_boxes', function($post_type) use ($position, $context){
+        add_action('do_meta_boxes', function ($post_type) use ($position, $context) {
             global $wp_meta_boxes;
 
             if ($context->getBindingName() !== $post_type) {
                 return;
             }
 
-            foreach($wp_meta_boxes[$post_type]['side']['core'] as $key => $metaBox) {
+            foreach ($wp_meta_boxes[$post_type]['side']['core'] as $key => $metaBox) {
                 // Don't replace our recently positioned taxonomy
                 if (preg_match('/^understory-taxonomy.+/', $key)) {
                     continue;
@@ -124,7 +125,7 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
                     && isset($metaBox['args']['taxonomy'])
                     && $metaBox['args']['taxonomy'] === $this->getBindingName()
                 ) {
-                    $wp_meta_boxes[$post_type]['side']['core']['understory-taxonomy'.$position] = $metaBox;
+                    $wp_meta_boxes[$post_type]['side']['core']['understory-taxonomy' . $position] = $metaBox;
                     unset($wp_meta_boxes[$post_type]['side']['core'][$key]);
 
                 }
@@ -141,6 +142,7 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
             '',
             $this->getConfig()->build()
         );
+
         $this->registerItemsInRegistry();
     }
 
@@ -176,7 +178,7 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
      */
     public function getMetaDataBinding()
     {
-        if(!isset($this->taxonomy)) {
+        if (!isset($this->taxonomy)) {
             $this->setMetaDataBinding($this->generateTaxonomy());
         }
 
@@ -209,7 +211,7 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
 
     public function getChildren()
     {
-        return array_map(function($child) {
+        return array_map(function ($child) {
             return new static($child);
         }, $this->getMetaDataBinding()->children());
     }
@@ -240,8 +242,8 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
 
     public function __get($property)
     {
-        if (method_exists($this, 'get'.$property)) {
-            return call_user_func_array([$this, 'get'.$property], []);
+        if (method_exists($this, 'get' . $property)) {
+            return call_user_func_array([$this, 'get' . $property], []);
         }
 
         return $this->getMetaDataBinding()->$property;
