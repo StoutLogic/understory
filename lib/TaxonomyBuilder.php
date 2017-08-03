@@ -66,7 +66,7 @@ class TaxonomyBuilder implements Builder
         $labels = [
             'name' => sprintf('%s', $plural),
             'singular_name' => sprintf('%s', $item),
-            'menu_name' => __(sprintf('%s', $item)),
+            'menu_name' => __(sprintf('%s', $plural)),
             'all_items' => __(sprintf('All %s', $plural)),
             'parent_item' => __(sprintf('Parent %s', $item)),
             'parent_item_colon' => __(sprintf('Parent %s:', $item)),
