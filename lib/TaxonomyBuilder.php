@@ -141,6 +141,9 @@ class TaxonomyBuilder implements Builder
     }
 
 
+    /**
+     * @return string
+     */
     public function getTaxonomyName()
     {
         return $this->taxonomyName;

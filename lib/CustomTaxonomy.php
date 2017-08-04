@@ -6,7 +6,11 @@ use Timber;
 
 abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable, Registry, Composition, Sequential, BelongsToPost
 {
+    /**
+     * @var string
+     */
     private $taxonomy;
+
     private $registry = [];
     private $config;
 
@@ -51,10 +55,8 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
 
     private function generateBuilder()
     {
-        preg_match('@\\\\([\w]+)$@', get_called_class(), $matches);
-        $taxonomyName = strtolower(
-            preg_replace('/(?<=\\w)(?=[A-Z])/', "-$1", $matches[1])
-        );
+        $taxonomyName = $this->generateTaxonomyName();
+
         return $this->configure(new TaxonomyBuilder($taxonomyName));
     }
 
@@ -139,7 +141,7 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
     {
         register_taxonomy(
             $this->getConfig()->getTaxonomyName(),
-            '',
+            $this->getConfig()->getConfig('object_type'),
             $this->getConfig()->build()
         );
 
@@ -268,5 +270,29 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
     public function __toString()
     {
         return $this->getTaxonomy();
+    }
+
+    /**
+     * Overwrite to change the way the taxonomy name is determined.
+     * This value is fed into the TaxonomyBuilder. If an existing taxonomy of
+     * the same name exist, it will load the existing configuration to allow
+     * modification.
+     *
+     * @return string
+     */
+    protected function generateTaxonomyName(): string
+    {
+        $matches = [];
+        preg_match('@\\\\([\w]+)$@', get_called_class(), $matches);
+        $taxonomyName = strtolower(
+            preg_replace('/(?<=\\w)(?=[A-Z])/', "-$1", $matches[1])
+        );
+
+        // Use the existing WordPress taxonomy post_tag with an underscore
+        if ($taxonomyName === 'post-tag') {
+            $taxonomyName = 'post_tag';
+        }
+
+        return $taxonomyName;
     }
 }

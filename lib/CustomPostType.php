@@ -62,10 +62,7 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
 
     private function generateBuilder()
     {
-        preg_match('@(\\\\)?([\w]+)$@', get_called_class(), $matches);
-        $cptName = strtolower(
-            preg_replace('/(?<=\\w)(?=[A-Z])/', "-$1", $matches[2])
-        );
+        $cptName = $this->generateCustomPostTypeName();
         return $this->configure(new PostTypeBuilder($cptName));
     }
 
@@ -298,5 +295,23 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
             $closure = $this->closureProp[$property];
             return $closure();
         }
+    }
+
+    /**
+     * Overwrite to change the way the custom post type name is determined.
+     * This value is fed into the PostTypeBuilder. If an existing post type of
+     * the same name exist, it will load the existing configuration to allow
+     * modification.
+     *
+     * @return string
+     */
+    protected function generateCustomPostTypeName()
+    {
+        $matches = [];
+        preg_match('@(\\\\)?([\w]+)$@', get_called_class(), $matches);
+        $cptName = strtolower(
+            preg_replace('/(?<=\\w)(?=[A-Z])/', "-$1", $matches[2])
+        );
+        return $cptName;
     }
 }
