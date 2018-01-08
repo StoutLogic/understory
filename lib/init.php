@@ -15,11 +15,22 @@
     return $template_dir;
 }, 10000, 3);
 
-\add_filter('theme_page_templates', function ($page_templates, $theme, $post) {
+\add_filter('stylesheet_directory', function ($template_dir, $template, $theme_root) {
+    if (!defined('TEMPLATEPATH')) {
+        if (file_exists($template_dir . '/app/Views')) {
+            $template_dir .= '/app/Views';
+
+        }
+
+    }
+    return $template_dir;
+}, 10000, 3);
+
+\add_filter('theme_page_templates', function ($page_templates, $theme, $post, $posttype) {
 
     if (count($page_templates) == 0) {
 
-        $files = (array) $theme->get_files('php', 2);
+        $files = (array) $theme->get_files('php', 2, true);
 
         foreach ($files as $file => $full_path) {
             if (! preg_match('|Template Name:(.*)$|mi', file_get_contents($full_path), $header)) {
@@ -37,4 +48,4 @@
 
     return $page_templates;
 
-}, 10000, 3);
+}, 10000, 4);

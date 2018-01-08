@@ -90,10 +90,16 @@ class Site extends \Timber\Site
     private function getFiles($dir)
     {
         $themeDir = \get_stylesheet_directory();
+        $parentDir = \get_template_directory();
         if (!file_exists($themeDir . '/' . $dir)) {
             return array();
         }
         $files = scandir($themeDir . '/' . $dir);
+
+        if ($themeDir !== $parentDir) {
+            $parentFiles = scandir($parentDir . '/' . $dir);
+            $files = array_merge($parentFiles, $files);
+        }
 
         $files = array_map(function ($file) {
             return basename($file, '.php');
@@ -121,6 +127,9 @@ class Site extends \Timber\Site
 
         foreach ($modelFiles as $modelFile) {
             $modelClass = static::getSiteNamespace().'\\Models\\'.$this->fileToClass($modelFile);
+            if (!class_exists($modelClass)) {
+                $modelClass = static::getParentNamespace().'\\Models\\'.$this->fileToClass($modelFile);
+            }
 
             if (new $modelClass instanceof CustomPostType) {
                 $this->registerPostType($modelClass);
@@ -131,8 +140,12 @@ class Site extends \Timber\Site
     public function isUnderStoryView($viewFile)
     {
         $filePath = \get_stylesheet_directory().'/app/Views/'.$viewFile.'.php';
+        $parentPath = \get_template_directory().'/app/Views/'.$viewFile.'.php';
         if (!file_exists($filePath)) {
-            return false;
+            if (!file_exists($parentPath)) {
+                return false;
+            }
+            $filePath = $parentPath;
         }
 
         $file_contents = file_get_contents($filePath);
@@ -151,6 +164,9 @@ class Site extends \Timber\Site
 
             if ($this->isUnderStoryView($viewFile)) {
                 $viewClass = static::getSiteNamespace().'\\Views\\'.$this->fileToClass($viewFile);
+                if (!class_exists($viewClass)) {
+                    $viewClass = static::getParentNamespace().'\\Views\\'.$this->fileToClass($viewFile);
+                }
                 $this->registerView($viewClass);
             }
         }
@@ -162,6 +178,9 @@ class Site extends \Timber\Site
 
         foreach ($taxonomyFiles as $taxonomyFile) {
             $taxonomyClass = static::getSiteNamespace().'\\Taxonomies\\'.$this->fileToClass($taxonomyFile);
+            if (!class_exists($taxonomyClass)) {
+                $taxonomyClass = static::getParentNamespace().'\\Taxonomies\\'.$this->fileToClass($taxonomyFile);
+            }
 
             if (new $taxonomyClass instanceof CustomTaxonomy) {
                 $this->registerTaxonomy($taxonomyClass);
@@ -192,7 +211,7 @@ class Site extends \Timber\Site
     public function registerView($viewClass)
     {
         // Append the full namespace to the classname if it doesn't exist
-        if (strpos($viewClass, static::getSiteNameSpace()) === false) {
+        if (strpos($viewClass, static::getSiteNameSpace()) === false && strpos($viewClass, static::getParentNamespace()) === false) {
             $viewClass = static::getSiteNamespace().$viewClass;
         }
 
@@ -202,16 +221,22 @@ class Site extends \Timber\Site
         // Index the viewClass by its file name, so we can render it
         // when WordPress tries to include that file
         $viewPath = \get_stylesheet_directory().'/app/Views'.$view->getFileName().'.php';
+        $parentViewPath = \get_template_directory().'/app/Views'.$view->getFileName().'.php';
         if (file_exists($viewPath)) {
             $this->views[$viewPath] = $view;
+        } else if (file_exists($parentViewPath)) {
+            $this->views[$parentViewPath] = $view;
         }
 
         // View may have a WordPress style filename, like home.php or single-post.php
         // Also on case insensative file systems, we need to make sure both Page.php and page.php load
         // the Page class
         $viewPath = \get_stylesheet_directory().'/app/Views'.$view->getFileNameDashedCase().'.php';
+        $parentViewPath = \get_template_directory().'/app/Views'.$view->getFileNameDashedCase().'.php';
         if (file_exists($viewPath)) {
             $this->views[$viewPath] = $view;
+        } else if (file_exists($parentViewPath)) {
+            $this->views[$parentViewPath] = $view;
         }
 
         $view->register();
@@ -282,6 +307,12 @@ class Site extends \Timber\Site
     public static function getSiteNamespace()
     {
         $reflection = new \ReflectionClass(get_called_class());
+        return $reflection->getNamespaceName();
+    }
+    public static function getParentNamespace()
+    {
+        $reflection = new \ReflectionClass(get_parent_class(static::class));
+
         return $reflection->getNamespaceName();
     }
 
