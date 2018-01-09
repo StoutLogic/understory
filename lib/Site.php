@@ -89,12 +89,13 @@ class Site extends \Timber\Site
 
     private function getFiles($dir)
     {
+        $files = [];
         $themeDir = \get_stylesheet_directory();
         $parentDir = \get_template_directory();
-        if (!file_exists($themeDir . '/' . $dir)) {
-            return array();
+
+        if (file_exists($themeDir . '/' . $dir)) {
+            $files = scandir($themeDir . '/' . $dir);
         }
-        $files = scandir($themeDir . '/' . $dir);
 
         if ($themeDir !== $parentDir) {
             $parentFiles = scandir($parentDir . '/' . $dir);
