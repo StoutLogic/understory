@@ -97,7 +97,7 @@ class Site extends \Timber\Site
             $files = scandir($themeDir . '/' . $dir);
         }
 
-        if ($themeDir !== $parentDir) {
+        if ($themeDir !== $parentDir && file_exists($parentDir . '/' . $dir)) {
             $parentFiles = scandir($parentDir . '/' . $dir);
             $files = array_merge($parentFiles, $files);
         }
