@@ -193,11 +193,7 @@ abstract class View implements DelegatesMetaDataBinding, Registerable, Registry,
         $calledClass = preg_replace('/.*Views/i', '', get_called_class());
 
         $calledClass = strtolower(
-            str_replace(
-                '_',
-                '',
-                preg_replace('/(?<=\\w)(?=[A-Z])/', '-$1', $calledClass)
-            )
+            preg_replace('/(?<=\\w)(?=[A-Z])/', '-$1', $calledClass)
         );
 
         return str_replace('\\', DIRECTORY_SEPARATOR, $calledClass);

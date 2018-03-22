@@ -42,7 +42,7 @@ class Site extends \Timber\Site
 
         \add_filter('wp_title', array( $this, 'wpTitle' ));
 
-        \add_filter('template_include', array( $this, 'renderView' ), 100000);
+        \add_filter('template_include', array( $this, 'renderView' ), 1000000);
 
         // Warm custom template cache
         \add_action('init', array( $this, 'loadPageTemplates' ), 1);
