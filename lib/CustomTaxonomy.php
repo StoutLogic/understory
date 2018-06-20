@@ -280,7 +280,7 @@ abstract class CustomTaxonomy implements DelegatesMetaDataBinding, Registerable,
      *
      * @return string
      */
-    protected function generateTaxonomyName(): string
+    protected function generateTaxonomyName()
     {
         $matches = [];
         preg_match('@\\\\([\w]+)$@', get_called_class(), $matches);
