@@ -28,11 +28,6 @@ class TaxonomyBuilder implements Builder
         return $this->setLabelConfig($key, $value);
     }
 
-    public function setLabelName($name)
-    {
-        return $this->setLabelConfig('singular_name', $name);
-    }
-
     public function setLabelPlural($plural)
     {
         return $this->setLabelConfig('name', $plural);
@@ -58,23 +53,35 @@ class TaxonomyBuilder implements Builder
         return $this->generateDefaultConfiguration();
     }
 
-    private function generateDefaultConfiguration()
+    public function setLabelName($singular, $plural = null)
     {
-        $item = ucwords(str_replace('-', ' ', $this->getTaxonomyName()));
-        $plural = Inflector::pluralize($item);
+        return $this->setConfig(
+            'labels',
+            array_merge(
+                $this->getConfig('labels'),
+                $this->generateLabels($singular, $plural)
+            )
+        );
+    }
 
-        $labels = [
+    private function generateLabels($singular, $plural = null)
+    {
+        if (!$plural) {
+            $plural = Inflector::pluralize($singular);
+        }
+
+        return [
             'name' => sprintf('%s', $plural),
-            'singular_name' => sprintf('%s', $item),
+            'singular_name' => sprintf('%s', $singular),
             'menu_name' => __(sprintf('%s', $plural)),
             'all_items' => __(sprintf('All %s', $plural)),
-            'parent_item' => __(sprintf('Parent %s', $item)),
-            'parent_item_colon' => __(sprintf('Parent %s:', $item)),
-            'new_item_name' => __(sprintf('New %s', $item)),
-            'add_new_item' => __(sprintf('Add %s', $item)),
-            'edit_item' => __(sprintf('Edit %s', $item)),
-            'update_item' => __(sprintf('Update %s', $item)),
-            'view_item' => __(sprintf('View %s', $item)),
+            'parent_item' => __(sprintf('Parent %s', $singular)),
+            'parent_item_colon' => __(sprintf('Parent %s:', $singular)),
+            'new_item_name' => __(sprintf('New %s', $singular)),
+            'add_new_item' => __(sprintf('Add %s', $singular)),
+            'edit_item' => __(sprintf('Edit %s', $singular)),
+            'update_item' => __(sprintf('Update %s', $singular)),
+            'view_item' => __(sprintf('View %s', $singular)),
             'separate_items_with_commas' => __(sprintf('Separate %s with commas',
                 strtolower($plural))),
             'add_or_remove_items' => __(sprintf('Add or remove %s',
@@ -84,6 +91,13 @@ class TaxonomyBuilder implements Builder
             'search_items' => __(sprintf('Search %s', $plural)),
             'not_found' => __('Not Found'),
         ];
+    }
+
+    private function generateDefaultConfiguration()
+    {
+        $item = ucwords(str_replace('-', ' ', $this->getTaxonomyName()));
+
+        $labels = $this->generateLabels($item);
 
         $args = [
             'labels' => $labels,

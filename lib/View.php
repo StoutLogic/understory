@@ -306,7 +306,7 @@ abstract class View implements DelegatesMetaDataBinding, Registerable, Registry,
     public function render()
     {
         $this->initializeBindings();
-        return Timber\Timber::fetch($this->getTemplate(), $this->initializeContext());
+        return Timber\Timber::compile($this->getTemplate(), $this->initializeContext());
     }
 
     /**

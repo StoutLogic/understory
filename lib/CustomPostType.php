@@ -245,7 +245,7 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
             'post_type' => $this->getPostType()
         ], $args);
 
-        return Timber\PostGetter::get_posts($args, get_called_class());
+        return \Timber\PostGetter::get_posts($args, get_called_class());
     }
 
     public function __isset($property)
