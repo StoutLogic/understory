@@ -5,6 +5,7 @@ namespace Understory;
 use Doctrine\Common\Inflector\Inflector;
 use Understory\Config;
 use \Timber\Timber;
+use Understory\Helpers\Svg;
 
 class Site extends \Timber\Site
 {
@@ -301,7 +302,7 @@ class Site extends \Timber\Site
     {
         /* this is where you can add your own functions to twig */
         $twig->addExtension(new \Twig_Extension_StringLoader());
-        $twig->addFilter('svg', new \Twig_Filter_Function(array( 'Understory\\Helpers\\Svg', 'embed')));
+        $twig->addFilter(new \Twig_SimpleFilter('svg', function($path) { Svg::embed($path); }));
         return $twig;
     }
 
