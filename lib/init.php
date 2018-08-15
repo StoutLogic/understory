@@ -27,12 +27,6 @@
 }, 10000, 3);
 
 
-// If our custom template name contains the /app/Views path in it, remove it.
-\add_filter('page_template_hierarchy', function($templates) {
-    return array_map(function ($template) {
-        return str_replace('app/Views/', '', $template);
-    }, $templates);
-}, 10000);
 
 \add_filter('theme_page_templates', function ($page_templates, $theme, $post, $posttype) {
 
