@@ -36,9 +36,7 @@
 
 \add_filter('theme_page_templates', function ($page_templates, $theme, $post, $posttype) {
 
-    if (count($page_templates) == 0) {
-
-        $files = (array) $theme->get_files('php', 2, true);
+     $files = (array) $theme->get_files('php', 2, true);
 
         foreach ($files as $file => $full_path) {
             if (! preg_match('|Template Name:(.*)$|mi', file_get_contents($full_path), $header)) {
@@ -52,7 +50,6 @@
         $key = "page_templates-{$cache_hash}";
         $group = 'themes';
         wp_cache_set( $key, $page_templates, $group, 1800 );
-    }
 
     return $page_templates;
 
