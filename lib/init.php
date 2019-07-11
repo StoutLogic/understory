@@ -31,10 +31,10 @@
     return $template_dir;
 }, 10000, 3);
 
-// If our custom template name contains the /app/Views path in it, remove it.
+// If our custom template name contains double /app/Views/app/Views/ path in it, remove it.
 \add_filter('page_template_hierarchy', function($templates) {
     return array_map(function ($template) {
-        return str_replace('app/Views/', '', $template);
+        return str_replace('app/Views/app/Views/', 'app/Views/', $template);
     }, $templates);
 }, 10000);
 
