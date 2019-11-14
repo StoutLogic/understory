@@ -164,7 +164,11 @@ abstract class CustomPostType implements DelegatesMetaDataBinding, Registerable,
         if (isset($wp_post_types[$this->getPostType()])) {
             // Convert associative arrays to a stdobject 1 level deep
             $config = json_decode(json_encode($this->getConfig()->build()), false);
-            $wp_post_types[$this->getPostType()] = $config;
+            if (class_exists('WP_Post_Type')) {
+                $wp_post_types[$this->getPostType()] = new \WP_Post_Type($this->getPostType(), $config);
+            } else {
+                $wp_post_types[$this->getPostType()] = $config;
+            }
             return true;
         }
 
