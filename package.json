@@ -1,6 +1,6 @@
 {
   "name": "understory",
-  "version": "0.9.2",
+  "version": "0.10.0",
   "description": "A WordPress theme layer, built on Timber and Twig.",
   "author": "Steve Pfisterer <steve@stoutlogic.com>",
   "license": "GPL-2.0+",
